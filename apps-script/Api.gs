@@ -7,6 +7,11 @@
  * GET  ?action=obras.get&id=OBR-...
  * POST ?action=obras.create
  * POST ?action=obras.update&id=OBR-...
+ * POST ?action=planejamento.get&id_obra=OBR-...
+ * POST ?action=wbs.create|wbs.update|wbs.delete
+ * POST ?action=atividades.create|atividades.update|atividades.delete
+ * POST ?action=dependencias.create|dependencias.delete
+ * POST ?action=cronograma.recalcular
  */
 
 function doGet(e) {
@@ -60,6 +65,76 @@ function handleApi_(e, method) {
         break;
       }
 
+      case 'planejamento.get': {
+        const idObra = params.id_obra || body.id_obra || body.ID_OBRA;
+        if (!idObra) throw new Error('ID_OBRA_OBRIGATORIO');
+        result = obterPlanejamento_(idObra);
+        break;
+      }
+
+      case 'wbs.create':
+        if (method !== 'POST') throw new Error('METODO_NAO_PERMITIDO');
+        result = criarWbs_(body);
+        break;
+
+      case 'wbs.update': {
+        if (method !== 'POST') throw new Error('METODO_NAO_PERMITIDO');
+        const id = body.id || body.ID_WBS;
+        if (!id) throw new Error('ID_WBS_OBRIGATORIO');
+        result = atualizarWbs_(id, body);
+        break;
+      }
+
+      case 'wbs.delete': {
+        if (method !== 'POST') throw new Error('METODO_NAO_PERMITIDO');
+        const id = body.id || body.ID_WBS;
+        if (!id) throw new Error('ID_WBS_OBRIGATORIO');
+        result = excluirWbs_(id);
+        break;
+      }
+
+      case 'atividades.create':
+        if (method !== 'POST') throw new Error('METODO_NAO_PERMITIDO');
+        result = criarAtividade_(body);
+        break;
+
+      case 'atividades.update': {
+        if (method !== 'POST') throw new Error('METODO_NAO_PERMITIDO');
+        const id = body.id || body.ID_ATIVIDADE;
+        if (!id) throw new Error('ID_ATIVIDADE_OBRIGATORIO');
+        result = atualizarAtividade_(id, body);
+        break;
+      }
+
+      case 'atividades.delete': {
+        if (method !== 'POST') throw new Error('METODO_NAO_PERMITIDO');
+        const id = body.id || body.ID_ATIVIDADE;
+        if (!id) throw new Error('ID_ATIVIDADE_OBRIGATORIO');
+        result = excluirAtividade_(id);
+        break;
+      }
+
+      case 'dependencias.create':
+        if (method !== 'POST') throw new Error('METODO_NAO_PERMITIDO');
+        result = criarDependencia_(body);
+        break;
+
+      case 'dependencias.delete': {
+        if (method !== 'POST') throw new Error('METODO_NAO_PERMITIDO');
+        const id = body.id || body.ID_DEPENDENCIA;
+        if (!id) throw new Error('ID_DEPENDENCIA_OBRIGATORIO');
+        result = excluirDependencia_(id);
+        break;
+      }
+
+      case 'cronograma.recalcular': {
+        if (method !== 'POST') throw new Error('METODO_NAO_PERMITIDO');
+        const idObra = body.id_obra || body.ID_OBRA;
+        if (!idObra) throw new Error('ID_OBRA_OBRIGATORIO');
+        result = recalcularCronograma_(idObra);
+        break;
+      }
+
       default:
         return jsonOutput_(fail_('ROTA_NAO_ENCONTRADA', 'Ação não reconhecida.', { action: action }));
     }
@@ -81,7 +156,26 @@ function apiMessage_(code) {
     METODO_NAO_PERMITIDO: 'Método HTTP não permitido para esta ação.',
     PAYLOAD_JSON_INVALIDO: 'O corpo da requisição contém JSON inválido.',
     DATA_INVALIDA: 'Uma das datas informadas é inválida.',
-    NUMERO_INVALIDO: 'Um dos valores numéricos informados é inválido.'
+    NUMERO_INVALIDO: 'Um dos valores numéricos informados é inválido.',
+    NOME_WBS_OBRIGATORIO: 'Informe o nome da etapa da EAP.',
+    ID_WBS_OBRIGATORIO: 'Informe a etapa da EAP.',
+    WBS_NAO_ENCONTRADA: 'Etapa da EAP não encontrada.',
+    WBS_PAI_INVALIDA: 'A etapa pai informada é inválida.',
+    WBS_EM_USO: 'Esta etapa possui subetapas ou atividades e não pode ser excluída.',
+    WBS_INVALIDA: 'A etapa da EAP informada é inválida.',
+    NOME_ATIVIDADE_OBRIGATORIO: 'Informe o nome da atividade.',
+    ID_ATIVIDADE_OBRIGATORIO: 'Informe a atividade.',
+    ATIVIDADE_NAO_ENCONTRADA: 'Atividade não encontrada.',
+    PESO_INVALIDO: 'O peso da atividade deve estar entre 0 e 100%.',
+    DEPENDENCIA_DADOS_OBRIGATORIOS: 'Informe atividade predecessora e sucessora.',
+    DEPENDENCIA_AUTO_REFERENCIA: 'Uma atividade não pode depender dela mesma.',
+    DEPENDENCIA_OBRA_INVALIDA: 'As duas atividades precisam pertencer à mesma obra.',
+    PERCENTUAL_LIBERACAO_INVALIDO: 'O percentual de liberação deve estar entre 0 e 100%.',
+    DEPENDENCIA_DUPLICADA: 'Esta dependência já existe.',
+    DEPENDENCIA_NAO_ENCONTRADA: 'Dependência não encontrada.',
+    ID_DEPENDENCIA_OBRIGATORIO: 'Informe a dependência.',
+    DEPENDENCIA_CICLICA: 'A dependência criaria um ciclo no cronograma.',
+    CALENDARIO_SEM_DIAS_UTEIS: 'O calendário da obra não possui dias úteis válidos.'
   };
 
   return messages[code] || code;
