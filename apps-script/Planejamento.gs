@@ -294,3 +294,110 @@ function excluirDependencia_(idDependencia) {
   });
   return { ID_DEPENDENCIA:idDependencia, ATIVA:false };
 }
+
+
+function atualizarWbs_(idWbs, payload) {
+  const atual = findObjectById_('WBS','ID_WBS',idWbs);
+  if (!atual) throw new Error('WBS_NAO_ENCONTRADA');
+
+  const changes = {};
+  if (Object.prototype.hasOwnProperty.call(payload,'nome') || Object.prototype.hasOwnProperty.call(payload,'NOME')) {
+    const nome = String(payload.NOME || payload.nome || '').trim();
+    if (!nome) throw new Error('NOME_WBS_OBRIGATORIO');
+    changes.NOME = nome;
+  }
+  if (Object.prototype.hasOwnProperty.call(payload,'codigo_wbs') || Object.prototype.hasOwnProperty.call(payload,'CODIGO_WBS')) {
+    changes.CODIGO_WBS = String(payload.CODIGO_WBS || payload.codigo_wbs || '').trim();
+  }
+  if (Object.prototype.hasOwnProperty.call(payload,'ordem') || Object.prototype.hasOwnProperty.call(payload,'ORDEM')) {
+    changes.ORDEM = asNumber_(payload.ORDEM || payload.ordem, 0);
+  }
+  if (Object.prototype.hasOwnProperty.call(payload,'id_wbs_pai') || Object.prototype.hasOwnProperty.call(payload,'ID_WBS_PAI')) {
+    const idPai = String(payload.ID_WBS_PAI || payload.id_wbs_pai || '').trim();
+    if (idPai === idWbs) throw new Error('WBS_PAI_INVALIDA');
+    if (idPai) {
+      const pai = findObjectById_('WBS','ID_WBS',idPai);
+      if (!pai || String(pai.ID_OBRA) !== String(atual.ID_OBRA)) throw new Error('WBS_PAI_INVALIDA');
+    }
+    changes.ID_WBS_PAI = idPai;
+  }
+  changes.ATUALIZADO_EM = now_();
+
+  const updated = updateObjectById_(
+    'WBS','ID_WBS',idWbs,changes,
+    ['NOME','CODIGO_WBS','ORDEM','ID_WBS_PAI','ATUALIZADO_EM']
+  );
+
+  appendAudit_({
+    ID_OBRA: atual.ID_OBRA,
+    ENTIDADE: 'WBS',
+    ID_REGISTRO: idWbs,
+    ACAO: 'ATUALIZAR',
+    VALOR_ANTERIOR: JSON.stringify(atual),
+    VALOR_NOVO: JSON.stringify(updated)
+  });
+  return updated;
+}
+
+function excluirWbs_(idWbs) {
+  const atual = findObjectById_('WBS','ID_WBS',idWbs);
+  if (!atual) throw new Error('WBS_NAO_ENCONTRADA');
+
+  const temFilhas = listarWbs_(atual.ID_OBRA).some(function(w) {
+    return String(w.ID_WBS_PAI) === String(idWbs) && String(w.ID_WBS) !== String(idWbs);
+  });
+  const temAtividades = listarAtividades_(atual.ID_OBRA).some(function(a) {
+    return String(a.ID_WBS) === String(idWbs);
+  });
+  if (temFilhas || temAtividades) throw new Error('WBS_EM_USO');
+
+  const updated = updateObjectById_(
+    'WBS','ID_WBS',idWbs,
+    { ATIVA:false, ATUALIZADO_EM:now_() },
+    ['ATIVA','ATUALIZADO_EM']
+  );
+
+  appendAudit_({
+    ID_OBRA: atual.ID_OBRA,
+    ENTIDADE:'WBS',
+    ID_REGISTRO:idWbs,
+    ACAO:'EXCLUIR',
+    VALOR_ANTERIOR:JSON.stringify(atual)
+  });
+  return updated;
+}
+
+function excluirAtividade_(idAtividade) {
+  const atual = obterAtividade_(idAtividade);
+  if (!atual) throw new Error('ATIVIDADE_NAO_ENCONTRADA');
+
+  listarDependencias_(atual.ID_OBRA)
+    .filter(function(d) {
+      return String(d.ID_ATIVIDADE_PAI) === String(idAtividade) ||
+             String(d.ID_ATIVIDADE_FILHA) === String(idAtividade);
+    })
+    .forEach(function(d) {
+      updateObjectById_(
+        'DEPENDENCIAS','ID_DEPENDENCIA',d.ID_DEPENDENCIA,
+        { ATIVA:false, ATUALIZADO_EM:now_() },
+        ['ATIVA','ATUALIZADO_EM']
+      );
+    });
+
+  const updated = updateObjectById_(
+    'ATIVIDADES','ID_ATIVIDADE',idAtividade,
+    { ATIVA:false, ATUALIZADO_EM:now_() },
+    ['ATIVA','ATUALIZADO_EM']
+  );
+
+  appendAudit_({
+    ID_OBRA: atual.ID_OBRA,
+    ENTIDADE:'ATIVIDADES',
+    ID_REGISTRO:idAtividade,
+    ACAO:'EXCLUIR',
+    VALOR_ANTERIOR:JSON.stringify(atual)
+  });
+
+  recalcularCronograma_(atual.ID_OBRA);
+  return updated;
+}
