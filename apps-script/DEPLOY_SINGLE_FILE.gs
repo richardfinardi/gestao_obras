@@ -1,9 +1,9 @@
 /**
  * GESTÃO DE OBRAS - BACKEND V1
- * Bundle para primeira implantação no Google Apps Script.
+ * Bundle único para implantação no Google Apps Script.
  *
  * Fonte oficial modular: /apps-script/*.gs
- * Banco: GESTAO_OBRAS_DB
+ * Banco oficial: GESTAO_OBRAS_DB
  */
 
 
@@ -374,6 +374,45 @@ function serializeValue_(value) {
 
 
 // ============================================================
+// apps-script/Auth.gs
+// ============================================================
+
+/**
+ * Segurança simples para a V1 de um único usuário.
+ * A chave fica em Script Properties, nunca no Sheets nem no GitHub.
+ */
+
+const AUTH = Object.freeze({
+  PROPERTY_KEY: 'GESTAO_OBRAS_ACCESS_KEY'
+});
+
+function configurarChaveAcesso() {
+  const token = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
+  PropertiesService.getScriptProperties().setProperty(AUTH.PROPERTY_KEY, token);
+  Logger.log('CHAVE DE ACESSO: ' + token);
+  return token;
+}
+
+function validarChaveAcesso_(payload) {
+  const expected = PropertiesService.getScriptProperties().getProperty(AUTH.PROPERTY_KEY);
+
+  if (!expected) {
+    throw new Error('CHAVE_ACESSO_NAO_CONFIGURADA');
+  }
+
+  const informed = String(
+    (payload && (payload.access_key || payload.ACCESS_KEY || payload.token)) || ''
+  ).trim();
+
+  if (!informed || informed !== expected) {
+    throw new Error('ACESSO_NEGADO');
+  }
+
+  return true;
+}
+
+
+// ============================================================
 // apps-script/Db.gs
 // ============================================================
 
@@ -706,6 +745,10 @@ function handleApi_(e, method) {
 
     let result;
 
+    if (action !== 'health') {
+      validarChaveAcesso_(Object.assign({}, params, body));
+    }
+
     switch (action) {
       case 'health':
         result = {
@@ -762,7 +805,9 @@ function apiMessage_(code) {
     METODO_NAO_PERMITIDO: 'Método HTTP não permitido para esta ação.',
     PAYLOAD_JSON_INVALIDO: 'O corpo da requisição contém JSON inválido.',
     DATA_INVALIDA: 'Uma das datas informadas é inválida.',
-    NUMERO_INVALIDO: 'Um dos valores numéricos informados é inválido.'
+    NUMERO_INVALIDO: 'Um dos valores numéricos informados é inválido.',
+    CHAVE_ACESSO_NAO_CONFIGURADA: 'A chave de acesso do backend ainda não foi configurada.',
+    ACESSO_NEGADO: 'Chave de acesso inválida.'
   };
 
   return messages[code] || code;
