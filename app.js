@@ -1,6 +1,5 @@
 const CONFIG = Object.freeze({
   API_URL: 'https://script.google.com/macros/s/AKfycbw6cRAPlwVzNOURoLNsTJ47xyezz0LStCuZyNpW2wT97f9pj3RADUn1L1MdqTq9Tm_b/exec',
-  ACCESS_KEY_STORAGE: 'gestao_obras_access_key',
   VERSION: '0.1.0'
 });
 
@@ -22,11 +21,6 @@ const el = {
   newProjectBtn: document.querySelector('#newProjectBtn'),
   emptyCreateBtn: document.querySelector('#emptyCreateBtn'),
   retryBtn: document.querySelector('#retryBtn'),
-  changeKeyBtn: document.querySelector('#changeKeyBtn'),
-  accessModal: document.querySelector('#accessModal'),
-  accessKeyInput: document.querySelector('#accessKeyInput'),
-  accessError: document.querySelector('#accessError'),
-  saveKeyBtn: document.querySelector('#saveKeyBtn'),
   projectModal: document.querySelector('#projectModal'),
   closeProjectModalBtn: document.querySelector('#closeProjectModalBtn'),
   cancelProjectBtn: document.querySelector('#cancelProjectBtn'),
@@ -41,13 +35,6 @@ document.addEventListener('DOMContentLoaded', boot);
 async function boot() {
   bindEvents();
   await checkHealth();
-
-  if (!getAccessKey()) {
-    openAccessModal();
-    showLoading(false);
-    return;
-  }
-
   await loadObras();
 }
 
@@ -57,15 +44,6 @@ function bindEvents() {
   el.closeProjectModalBtn.addEventListener('click', closeProjectModal);
   el.cancelProjectBtn.addEventListener('click', closeProjectModal);
   el.retryBtn.addEventListener('click', loadObras);
-  el.changeKeyBtn.addEventListener('click', () => {
-    localStorage.removeItem(CONFIG.ACCESS_KEY_STORAGE);
-    openAccessModal();
-  });
-
-  el.saveKeyBtn.addEventListener('click', saveAccessKey);
-  el.accessKeyInput.addEventListener('keydown', event => {
-    if (event.key === 'Enter') saveAccessKey();
-  });
 
   el.projectForm.addEventListener('submit', createProject);
 
@@ -74,7 +52,7 @@ function bindEvents() {
     renderObras();
   });
 
-  [el.accessModal, el.projectModal].forEach(modal => {
+  [el.projectModal].forEach(modal => {
     modal.addEventListener('click', event => {
       if (event.target === el.projectModal) closeProjectModal();
     });
@@ -101,7 +79,6 @@ async function checkHealth() {
 }
 
 async function api(action, data = {}) {
-  const accessKey = getAccessKey();
 
   const response = await fetch(CONFIG.API_URL, {
     method: 'POST',
@@ -111,7 +88,6 @@ async function api(action, data = {}) {
     },
     body: JSON.stringify({
       action,
-      access_key: accessKey,
       ...data
     })
   });
@@ -128,11 +104,6 @@ async function api(action, data = {}) {
   if (!payload.ok) {
     const code = payload?.error?.code || '';
     const message = payload?.error?.message || 'Erro no backend.';
-
-    if (code === 'ACESSO_NEGADO' || code === 'CHAVE_ACESSO_NAO_CONFIGURADA') {
-      localStorage.removeItem(CONFIG.ACCESS_KEY_STORAGE);
-      openAccessModal(message);
-    }
 
     throw new Error(message);
   }
@@ -233,33 +204,6 @@ function updateSummary() {
   el.planningCount.textContent = String(planejamento);
 }
 
-async function saveAccessKey() {
-  const key = el.accessKeyInput.value.trim();
-
-  if (!key) {
-    showInlineError(el.accessError, 'Informe a chave de acesso.');
-    return;
-  }
-
-  localStorage.setItem(CONFIG.ACCESS_KEY_STORAGE, key);
-  el.saveKeyBtn.disabled = true;
-  el.saveKeyBtn.textContent = 'Validando...';
-  hideState(el.accessError);
-
-  try {
-    await api('obras.list');
-    closeAccessModal();
-    await loadObras();
-    toast('Conectado ao banco.');
-  } catch (error) {
-    localStorage.removeItem(CONFIG.ACCESS_KEY_STORAGE);
-    showInlineError(el.accessError, error.message);
-  } finally {
-    el.saveKeyBtn.disabled = false;
-    el.saveKeyBtn.textContent = 'Conectar ao banco';
-  }
-}
-
 async function createProject(event) {
   event.preventDefault();
 
@@ -298,11 +242,6 @@ async function createProject(event) {
 }
 
 function openProjectModal() {
-  if (!getAccessKey()) {
-    openAccessModal();
-    return;
-  }
-
   el.projectForm.reset();
   hideState(el.projectFormError);
   el.projectModal.classList.remove('hidden');
@@ -313,25 +252,6 @@ function openProjectModal() {
 function closeProjectModal() {
   el.projectModal.classList.add('hidden');
   el.projectModal.setAttribute('aria-hidden', 'true');
-}
-
-function openAccessModal(message = '') {
-  if (message) showInlineError(el.accessError, message);
-  else hideState(el.accessError);
-
-  el.accessKeyInput.value = '';
-  el.accessModal.classList.remove('hidden');
-  el.accessModal.setAttribute('aria-hidden', 'false');
-  setTimeout(() => el.accessKeyInput.focus(), 30);
-}
-
-function closeAccessModal() {
-  el.accessModal.classList.add('hidden');
-  el.accessModal.setAttribute('aria-hidden', 'true');
-}
-
-function getAccessKey() {
-  return localStorage.getItem(CONFIG.ACCESS_KEY_STORAGE) || '';
 }
 
 function showLoading(show) {
