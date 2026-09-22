@@ -2,14 +2,14 @@
  * GESTÃO DE OBRAS
  * Bootstrap do banco Google Sheets
  *
- * V2 - Planejamento físico e motor de cronograma
+ * V3 - Grade de planejamento, peso relativo e efetivação em lote
  * Idempotente: pode ser executado novamente para criar abas
  * e acrescentar campos que ainda não existam.
  */
 
 const APP = Object.freeze({
   NAME: 'Gestão de Obras',
-  SCHEMA_VERSION: '2',
+  SCHEMA_VERSION: '3',
   TIMEZONE: 'America/Sao_Paulo',
   DEFAULT_ORGANIZATION_ID: 'ORG-001',
   SPREADSHEET_ID: '1FY1ToQ4I8CdZk1zvxQ4fMO3SHO6uggKcNhaixZvq5GA'
@@ -48,7 +48,7 @@ const DB_SCHEMA = Object.freeze({
 
   ATIVIDADES: [
     'ID_ATIVIDADE','ID_OBRA','ID_WBS','CODIGO','NOME','ID_TIPO_ATIVIDADE',
-    'ID_EMPRESA','ID_RESPONSAVEL','DURACAO_PLANEJADA_DIAS','PESO_PERCENTUAL',
+    'ID_EMPRESA','ID_RESPONSAVEL','DURACAO_PLANEJADA_DIAS','PESO_PERCENTUAL','PESO_RELATIVO',
     'RESTRICAO_INICIO_MINIMO','PERCENTUAL_ATUAL',
     'DATA_INICIO_FORECAST','DATA_FIM_FORECAST',
     'DATA_INICIO_REAL','DATA_FIM_REAL',
@@ -75,7 +75,7 @@ const DB_SCHEMA = Object.freeze({
 
   BASELINE_ATIVIDADES: [
     'ID_BASELINE_ATIVIDADE','ID_BASELINE','ID_OBRA','ID_ATIVIDADE',
-    'DURACAO_PLANEJADA_DIAS','PESO_PERCENTUAL',
+    'DURACAO_PLANEJADA_DIAS','PESO_PERCENTUAL','PESO_RELATIVO',
     'DATA_INICIO','DATA_FIM','CRIADO_EM'
   ],
 
