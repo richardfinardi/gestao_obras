@@ -48,7 +48,7 @@ function criarObra_(payload) {
   const obra = {
     ID_OBRA: idObra,
     ID_ORGANIZACAO: APP.DEFAULT_ORGANIZATION_ID,
-    CODIGO: String(payload.CODIGO || payload.codigo || '').trim(),
+    CODIGO: proximoCodigoObra_(),
     NOME: nome,
     CLIENTE: String(payload.CLIENTE || payload.cliente || '').trim(),
     DESCRICAO: String(payload.DESCRICAO || payload.descricao || '').trim(),
@@ -83,7 +83,6 @@ function atualizarObra_(idObra, payload) {
 
   const changes = {};
   const map = {
-    CODIGO: ['CODIGO','codigo'],
     NOME: ['NOME','nome'],
     CLIENTE: ['CLIENTE','cliente'],
     DESCRICAO: ['DESCRICAO','descricao'],
@@ -128,7 +127,7 @@ function atualizarObra_(idObra, payload) {
     idObra,
     changes,
     [
-      'CODIGO','NOME','CLIENTE','DESCRICAO',
+      'NOME','CLIENTE','DESCRICAO',
       'DATA_INICIO_CONTRATUAL','DATA_FIM_CONTRATUAL',
       'ID_CALENDARIO','STATUS','ATIVA','ATUALIZADO_EM'
     ]
