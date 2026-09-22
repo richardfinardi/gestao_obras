@@ -50,7 +50,7 @@ function criarWbs_(payload) {
     ID_WBS: uid_('WBS'),
     ID_OBRA: idObra,
     ID_WBS_PAI: idPai,
-    CODIGO_WBS: String(payload.CODIGO_WBS || payload.codigo_wbs || '').trim(),
+    CODIGO_WBS: proximoCodigoWbs_(idObra, idPai),
     NOME: nome,
     ORDEM: asNumber_(payload.ORDEM || payload.ordem, 0),
     ATIVA: true,
@@ -107,7 +107,7 @@ function criarAtividade_(payload) {
     ID_ATIVIDADE: uid_('ATV'),
     ID_OBRA: idObra,
     ID_WBS: idWbs,
-    CODIGO: String(payload.CODIGO || payload.codigo || '').trim(),
+    CODIGO: proximoCodigoAtividade_(idObra, idWbs),
     NOME: nome,
     ID_TIPO_ATIVIDADE: String(payload.ID_TIPO_ATIVIDADE || payload.id_tipo_atividade || '').trim(),
     ID_EMPRESA: String(payload.ID_EMPRESA || payload.id_empresa || '').trim(),
@@ -158,7 +158,6 @@ function atualizarAtividade_(idAtividade, payload) {
   const changes = {};
   const map = {
     ID_WBS: ['ID_WBS','id_wbs'],
-    CODIGO: ['CODIGO','codigo'],
     NOME: ['NOME','nome'],
     ID_TIPO_ATIVIDADE: ['ID_TIPO_ATIVIDADE','id_tipo_atividade'],
     ID_EMPRESA: ['ID_EMPRESA','id_empresa'],
@@ -195,7 +194,7 @@ function atualizarAtividade_(idAtividade, payload) {
 
   const updated = updateObjectById_(
     'ATIVIDADES','ID_ATIVIDADE',idAtividade,changes,
-    ['ID_WBS','CODIGO','NOME','ID_TIPO_ATIVIDADE','ID_EMPRESA','ID_RESPONSAVEL',
+    ['ID_WBS','NOME','ID_TIPO_ATIVIDADE','ID_EMPRESA','ID_RESPONSAVEL',
      'DURACAO_PLANEJADA_DIAS','PESO_PERCENTUAL','RESTRICAO_INICIO_MINIMO',
      'DURACAO_PROJETADA_DIAS','ORDEM','ATIVA','ATUALIZADO_EM']
   );
@@ -306,9 +305,6 @@ function atualizarWbs_(idWbs, payload) {
     if (!nome) throw new Error('NOME_WBS_OBRIGATORIO');
     changes.NOME = nome;
   }
-  if (Object.prototype.hasOwnProperty.call(payload,'codigo_wbs') || Object.prototype.hasOwnProperty.call(payload,'CODIGO_WBS')) {
-    changes.CODIGO_WBS = String(payload.CODIGO_WBS || payload.codigo_wbs || '').trim();
-  }
   if (Object.prototype.hasOwnProperty.call(payload,'ordem') || Object.prototype.hasOwnProperty.call(payload,'ORDEM')) {
     changes.ORDEM = asNumber_(payload.ORDEM || payload.ordem, 0);
   }
@@ -325,7 +321,7 @@ function atualizarWbs_(idWbs, payload) {
 
   const updated = updateObjectById_(
     'WBS','ID_WBS',idWbs,changes,
-    ['NOME','CODIGO_WBS','ORDEM','ID_WBS_PAI','ATUALIZADO_EM']
+    ['NOME','ORDEM','ID_WBS_PAI','ATUALIZADO_EM']
   );
 
   appendAudit_({
