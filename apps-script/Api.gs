@@ -12,6 +12,7 @@
  * POST ?action=atividades.create|atividades.update|atividades.delete
  * POST ?action=dependencias.create|dependencias.delete
  * POST ?action=cronograma.recalcular
+ * POST ?action=planejamento.efetivar
  */
 
 function doGet(e) {
@@ -135,6 +136,12 @@ function handleApi_(e, method) {
         break;
       }
 
+      case 'planejamento.efetivar': {
+        if (method !== 'POST') throw new Error('METODO_NAO_PERMITIDO');
+        result = efetivarPlanejamento_(body);
+        break;
+      }
+
       default:
         return jsonOutput_(fail_('ROTA_NAO_ENCONTRADA', 'Ação não reconhecida.', { action: action }));
     }
@@ -166,7 +173,17 @@ function apiMessage_(code) {
     NOME_ATIVIDADE_OBRIGATORIO: 'Informe o nome da atividade.',
     ID_ATIVIDADE_OBRIGATORIO: 'Informe a atividade.',
     ATIVIDADE_NAO_ENCONTRADA: 'Atividade não encontrada.',
-    PESO_INVALIDO: 'O peso da atividade deve estar entre 0 e 100%.',
+    PESO_INVALIDO: 'O peso da atividade não pode ser negativo.',
+    PLANEJAMENTO_INVALIDO: 'O rascunho do planejamento é inválido.',
+    PLANEJAMENTO_LINHA_SEM_CHAVE: 'Existe uma linha sem identificador interno.',
+    PLANEJAMENTO_CHAVE_DUPLICADA: 'Existe uma linha duplicada no planejamento.',
+    PLANEJAMENTO_TIPO_INVALIDO: 'Cada linha precisa ser uma Etapa ou Atividade.',
+    PLANEJAMENTO_NOME_OBRIGATORIO: 'Informe o nome de todas as etapas e atividades.',
+    PLANEJAMENTO_PAI_INVALIDO: 'Existe uma linha vinculada a um item pai inexistente.',
+    PLANEJAMENTO_HIERARQUIA_INVALIDA: 'A hierarquia do planejamento possui uma referência inválida.',
+    PLANEJAMENTO_REVISAO_NECESSARIA: 'Esta obra já possui execução ou baseline. Alterações estruturais deverão ser feitas por uma revisão do planejamento.',
+    DURACAO_INVALIDA: 'A duração deve ser de pelo menos 1 dia útil.',
+    DEPENDENCIA_ATIVIDADE_INVALIDA: 'Dependências só podem ligar atividades.',
     DEPENDENCIA_DADOS_OBRIGATORIOS: 'Informe atividade predecessora e sucessora.',
     DEPENDENCIA_AUTO_REFERENCIA: 'Uma atividade não pode depender dela mesma.',
     DEPENDENCIA_OBRA_INVALIDA: 'As duas atividades precisam pertencer à mesma obra.',
