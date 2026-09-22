@@ -25,10 +25,17 @@ Sistema web de planejamento e acompanhamento físico de obras.
 - `apps-script/appsscript.json`: manifesto do Apps Script.
 - `docs/MODELAGEM_V1.md`: modelagem funcional e dados.
 
-## Primeiro passo
+## Fluxo de desenvolvimento
 
-Executar `setupSistema()` no Apps Script ligado à planilha do projeto. A função cria todas as abas e campos automaticamente e pode ser executada novamente com segurança para adicionar campos futuros.
+O GitHub é a fonte oficial do projeto.
 
+- Frontend: arquivos da raiz do repositório.
+- Backend: módulos em `apps-script/`.
+- Banco: Google Sheets `GESTAO_OBRAS_DB`.
+- Deploy do Apps Script: automatizado por GitHub Actions usando a autorização `clasp` já existente no projeto Fluxo de Caixa.
+- Alterações de schema são feitas por código e/ou diretamente pela integração com Google Sheets; o usuário não cria campos manualmente.
+
+Não existe mais fluxo de copiar/colar `Code.gs` ou executar bundle manual.
 
 ## Estado atual
 
@@ -51,3 +58,16 @@ Rotas iniciais:
 - `POST ?action=obras.update&id=...`
 
 A próxima etapa é ativar/publicar o projeto Google Apps Script e então conectar o frontend GitHub Pages.
+
+
+## Deploy automático
+
+A ponte de publicação fica em `richardfinardi/fluxo_caixa`, workflow `deploy-gestao-obras.yml`.
+
+Quando uma alteração de backend estiver pronta:
+1. o código é atualizado em `richardfinardi/gestao_obras`;
+2. o gatilho de deploy no `fluxo_caixa` é atualizado;
+3. GitHub Actions usa `clasp` para enviar os módulos ao Apps Script;
+4. o deployment Web App existente é atualizado mantendo a mesma URL `/exec`.
+
+O único vínculo técnico necessário para concluir a automação é o Script ID do projeto Apps Script atual.
