@@ -278,21 +278,19 @@ function efetivarPlanejamento_(payload) {
     appendObjectsBulk_('DEPENDENCIAS', dependencias);
     SpreadsheetApp.flush();
 
-    appendAudit_({
-      ID_OBRA: idObra,
-      ENTIDADE: 'PLANEJAMENTO',
-      ID_REGISTRO: idObra,
-      ACAO: 'EFETIVAR',
-      VALOR_NOVO: JSON.stringify({
-        etapas: wbs.length,
-        atividades: atividades.length,
-        dependencias: dependencias.length
-      })
-    });
-
   } finally {
     lock.releaseLock();
   }
+
+  appendAudit_({
+    ID_OBRA: idObra,
+    ENTIDADE: 'PLANEJAMENTO',
+    ID_REGISTRO: idObra,
+    ACAO: 'EFETIVAR',
+    VALOR_NOVO: JSON.stringify({
+      linhas: rows.length
+    })
+  });
 
   recalcularCronograma_(idObra);
   return obterPlanejamento_(idObra);
