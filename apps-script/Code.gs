@@ -2,14 +2,14 @@
  * GESTÃO DE OBRAS
  * Bootstrap do banco Google Sheets
  *
- * V1 - Schema inicial
+ * V2 - Planejamento físico e motor de cronograma
  * Idempotente: pode ser executado novamente para criar abas
  * e acrescentar campos que ainda não existam.
  */
 
 const APP = Object.freeze({
   NAME: 'Gestão de Obras',
-  SCHEMA_VERSION: '1',
+  SCHEMA_VERSION: '2',
   TIMEZONE: 'America/Sao_Paulo',
   DEFAULT_ORGANIZATION_ID: 'ORG-001',
   SPREADSHEET_ID: '1FY1ToQ4I8CdZk1zvxQ4fMO3SHO6uggKcNhaixZvq5GA'
