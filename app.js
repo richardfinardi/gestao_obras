@@ -1,6 +1,6 @@
 const CONFIG = Object.freeze({
   API_URL: 'https://script.google.com/macros/s/AKfycbw6cRAPlwVzNOURoLNsTJ47xyezz0LStCuZyNpW2wT97f9pj3RADUn1L1MdqTq9Tm_b/exec',
-  VERSION: '0.3.0',
+  VERSION: '0.3.2',
   DRAFT_PREFIX: 'gestao_obras_draft_v3_'
 });
 
@@ -99,7 +99,8 @@ function cacheElements() {
     'projectModal','closeProjectModalBtn','cancelProjectBtn','projectForm','projectFormError','saveProjectBtn',
     'helpBackdrop','helpDrawer','helpTitle','helpContent','closeHelpBtn',
     'dependencyBackdrop','dependencyDrawer','dependencyDrawerTitle','closeDependencyDrawerBtn',
-    'dependencyEditor','addDependencyRelationBtn','toast'
+    'dependencyEditor','addDependencyRelationBtn',
+    'helpPopover','helpPopoverClose','helpPopoverTitle','helpPopoverBody','toast'
   ].forEach(id => el[id] = document.querySelector('#' + id));
 }
 
@@ -146,17 +147,19 @@ function bindEvents() {
   el.plannerBody.addEventListener('input', handleGridInput);
   el.plannerBody.addEventListener('change', handleGridInput);
 
-  document.addEventListener('click', e => {
-    const help = e.target.closest('[data-help]');
-    if (help) {
-      e.preventDefault();
-      e.stopPropagation();
-      openHelp(help.dataset.help);
-    }
+  bindHelpButtons();
+  el.screenHelpBtn.addEventListener('click', e => openHelpPopover('tela', e.currentTarget));
+  el.helpPopoverClose.addEventListener('click', closeHelpPopover);
+
+  document.addEventListener('pointerdown', e => {
+    if (el.helpPopover.classList.contains('hidden')) return;
+    if (e.target.closest('#helpPopover') || e.target.closest('[data-help]') || e.target.closest('#screenHelpBtn')) return;
+    closeHelpPopover();
   });
-  el.screenHelpBtn.addEventListener('click', () => openHelp('tela'));
-  el.closeHelpBtn.addEventListener('click', closeHelp);
-  el.helpBackdrop.addEventListener('click', closeHelp);
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeHelpPopover();
+  });
 
   el.closeDependencyDrawerBtn.addEventListener('click', closeDependencyDrawer);
   el.dependencyBackdrop.addEventListener('click', closeDependencyDrawer);
@@ -475,7 +478,7 @@ function renderGrid() {
 }
 
 function getTypeOptions(selected){
-  return '<option value="">Sem classificação</option>'+state.tipos.map(t=>
+  return '<option value="">Sem tipo</option>'+state.tipos.map(t=>
     `<option value="${escapeAttr(t.ID_TIPO_ATIVIDADE)}" ${String(selected)===String(t.ID_TIPO_ATIVIDADE)?'selected':''}>${escapeHtml(t.NOME)}</option>`
   ).join('');
 }
@@ -691,7 +694,7 @@ function updateSummaryFromDraft(){
 }
 
 function updateDraftStatus(){
-  el.draftStatus.textContent=state.dirty?'Alterações não efetivadas':'Planejamento efetivado';
+  el.draftStatus.textContent=state.dirty?'Rascunho com alterações':'Planejamento efetivado';
   el.draftStatus.classList.toggle('dirty',state.dirty);
   el.draftStatus.classList.toggle('saved',!state.dirty);
   el.effectivateBtn.disabled=!state.dirty;
@@ -865,15 +868,54 @@ function handleDependencyEditorClick(e){
   renderGrid();
 }
 
-function openHelp(topic){
-  const h=HELP[topic]||HELP.tela;
-  el.helpTitle.textContent=h.title;
-  el.helpContent.innerHTML=h.html;
-  show(el.helpBackdrop); show(el.helpDrawer);
+function bindHelpButtons(){
+  document.querySelectorAll('[data-help]').forEach(button => {
+    button.addEventListener('click', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      openHelpPopover(button.dataset.help, button);
+    });
+
+    // Fallback nativo: se o JS do popover falhar, ainda há explicação ao passar o mouse.
+    const h=HELP[button.dataset.help]||HELP.tela;
+    if(!button.title) button.title=stripHtml(h.html);
+  });
 }
 
-function closeHelp(){
-  hide(el.helpBackdrop); hide(el.helpDrawer);
+function openHelpPopover(topic, anchor){
+  const h=HELP[topic]||HELP.tela;
+  el.helpPopoverTitle.textContent=h.title;
+  el.helpPopoverBody.innerHTML=h.html;
+  show(el.helpPopover);
+
+  const rect=anchor.getBoundingClientRect();
+  const pop=el.helpPopover;
+  const width=Math.min(360, window.innerWidth - 24);
+  pop.style.width=width+'px';
+
+  requestAnimationFrame(()=>{
+    const popRect=pop.getBoundingClientRect();
+    let left=rect.left + (rect.width/2) - (popRect.width/2);
+    left=Math.max(12,Math.min(left,window.innerWidth-popRect.width-12));
+
+    let top=rect.bottom+10;
+    if(top+popRect.height>window.innerHeight-12){
+      top=Math.max(12,rect.top-popRect.height-10);
+    }
+
+    pop.style.left=left+'px';
+    pop.style.top=top+'px';
+  });
+}
+
+function closeHelpPopover(){
+  hide(el.helpPopover);
+}
+
+function stripHtml(html){
+  const div=document.createElement('div');
+  div.innerHTML=html;
+  return (div.textContent||'').replace(/\s+/g,' ').trim();
 }
 
 async function createProject(e){
