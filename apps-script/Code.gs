@@ -11,7 +11,8 @@ const APP = Object.freeze({
   NAME: 'Gestão de Obras',
   SCHEMA_VERSION: '1',
   TIMEZONE: 'America/Sao_Paulo',
-  DEFAULT_ORGANIZATION_ID: 'ORG-001'
+  DEFAULT_ORGANIZATION_ID: 'ORG-001',
+  SPREADSHEET_ID: '1FY1ToQ4I8CdZk1zvxQ4fMO3SHO6uggKcNhaixZvq5GA'
 });
 
 const DB_SCHEMA = Object.freeze({
@@ -102,14 +103,19 @@ const DB_SCHEMA = Object.freeze({
 });
 
 /**
+ * Retorna sempre o banco oficial do projeto.
+ * O backend pode ser vinculado ou standalone sem depender da planilha ativa.
+ */
+function getDb_() {
+  return SpreadsheetApp.openById(APP.SPREADSHEET_ID);
+}
+
+/**
  * Cria e atualiza a estrutura do banco.
  * Não remove abas, colunas nem dados existentes.
  */
 function setupSistema() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  if (!ss) {
-    throw new Error('Este script deve estar vinculado a uma planilha Google Sheets.');
-  }
+  const ss = getDb_();
 
   Object.entries(DB_SCHEMA).forEach(([sheetName, headers]) => {
     ensureSheetSchema_(ss, sheetName, headers);
@@ -222,7 +228,7 @@ function styleDatabase_(ss) {
  * Diagnóstico rápido da estrutura.
  */
 function verificarSchema() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getDb_();
 
   return Object.entries(DB_SCHEMA).map(([sheetName, expectedHeaders]) => {
     const sheet = ss.getSheetByName(sheetName);
