@@ -268,27 +268,45 @@ function recalcularCronograma_(idObra) {
   const headers = getHeaders_(sheet);
   const idIndex = headers.indexOf('ID_ATIVIDADE');
   const lastRow = sheet.getLastRow();
-  const idsRows = lastRow >= 2 ? sheet.getRange(2, idIndex + 1, lastRow - 1, 1).getValues().flat() : [];
 
-  ordem.forEach(function(id) {
-    const rowOffset = idsRows.findIndex(function(v) { return String(v) === id; });
-    if (rowOffset < 0) return;
-    const row = rowOffset + 2;
-    const a = porId[id];
+  if (lastRow >= 2) {
+    const dataRange = sheet.getRange(2, 1, lastRow - 1, headers.length);
+    const values = dataRange.getValues();
+    const rowById = {};
 
-    [
-      ['DATA_INICIO_FORECAST', a.DATA_INICIO_FORECAST],
-      ['DATA_FIM_FORECAST', a.DATA_FIM_FORECAST],
-      ['DURACAO_PROJETADA_DIAS', a.DURACAO_PROJETADA_DIAS],
-      ['FOLGA_TOTAL_DIAS', a.FOLGA_TOTAL_DIAS],
-      ['CAMINHO_CRITICO', a.CAMINHO_CRITICO],
-      ['STATUS', a.STATUS],
-      ['ATUALIZADO_EM', now_()]
-    ].forEach(function(pair) {
-      const col = headers.indexOf(pair[0]);
-      if (col >= 0) sheet.getRange(row, col + 1).setValue(pair[1]);
+    values.forEach(function(row, index) {
+      rowById[String(row[idIndex])] = index;
     });
-  });
+
+    const cols = {
+      inicio: headers.indexOf('DATA_INICIO_FORECAST'),
+      fim: headers.indexOf('DATA_FIM_FORECAST'),
+      duracao: headers.indexOf('DURACAO_PROJETADA_DIAS'),
+      folga: headers.indexOf('FOLGA_TOTAL_DIAS'),
+      critica: headers.indexOf('CAMINHO_CRITICO'),
+      status: headers.indexOf('STATUS'),
+      atualizado: headers.indexOf('ATUALIZADO_EM')
+    };
+    const atualizadoEm = now_();
+
+    ordem.forEach(function(id) {
+      const rowIndex = rowById[String(id)];
+      if (rowIndex === undefined) return;
+
+      const row = values[rowIndex];
+      const a = porId[id];
+
+      if (cols.inicio >= 0) row[cols.inicio] = a.DATA_INICIO_FORECAST;
+      if (cols.fim >= 0) row[cols.fim] = a.DATA_FIM_FORECAST;
+      if (cols.duracao >= 0) row[cols.duracao] = a.DURACAO_PROJETADA_DIAS;
+      if (cols.folga >= 0) row[cols.folga] = a.FOLGA_TOTAL_DIAS;
+      if (cols.critica >= 0) row[cols.critica] = a.CAMINHO_CRITICO;
+      if (cols.status >= 0) row[cols.status] = a.STATUS;
+      if (cols.atualizado >= 0) row[cols.atualizado] = atualizadoEm;
+    });
+
+    dataRange.setValues(values);
+  }
 
   SpreadsheetApp.flush();
 
@@ -296,7 +314,7 @@ function recalcularCronograma_(idObra) {
   return {
     atividades: atualizadas,
     dataFimForecast: dataFimProjeto ? formatDateKey_(dataFimProjeto) : null,
-    pesoTotal: atualizadas.reduce(function(s, a) { return s + Number(a.PESO_PERCENTUAL || 0); }, 0),
+    pesoTotal: atualizadas.reduce(function(s, a) { return s + obterPesoRelativo_(a); }, 0),
     criticas: atualizadas.filter(function(a) { return asBoolean_(a.CAMINHO_CRITICO, false); }).length
   };
 }
