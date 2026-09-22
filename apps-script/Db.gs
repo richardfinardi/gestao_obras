@@ -81,7 +81,17 @@ function appendObject_(sheetName, data) {
       return value === undefined || value === null ? '' : value;
     });
 
-    sheet.appendRow(row);
+    const rowNumber = Math.max(sheet.getLastRow() + 1, 2);
+    const rowRange = sheet.getRange(rowNumber, 1, 1, headers.length);
+
+    ['CODIGO', 'CODIGO_WBS'].forEach(function(textHeader) {
+      const index = headers.indexOf(textHeader);
+      if (index >= 0) {
+        sheet.getRange(rowNumber, index + 1).setNumberFormat('@');
+      }
+    });
+
+    rowRange.setValues([row]);
     SpreadsheetApp.flush();
 
     return data;
