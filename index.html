@@ -19,24 +19,19 @@
       </div>
 
       <nav class="nav">
-        <button class="nav-item active" type="button">
-          <span class="nav-icon">▦</span>
-          Obras
+        <button class="nav-item active" id="navObras" type="button">
+          <span class="nav-icon">▦</span> Obras
         </button>
-        <button class="nav-item" type="button" disabled>
-          <span class="nav-icon">⌁</span>
-          Planejamento
-          <span class="soon">em breve</span>
+        <button class="nav-item" id="navPlanejamento" type="button" disabled>
+          <span class="nav-icon">⌁</span> Planejamento
         </button>
-        <button class="nav-item" type="button" disabled>
-          <span class="nav-icon">✓</span>
-          Diário de avanço
-          <span class="soon">em breve</span>
+        <button class="nav-item" type="button" disabled title="Próxima etapa">
+          <span class="nav-icon">✓</span> Diário de avanço
+          <span class="soon">próximo</span>
         </button>
-        <button class="nav-item" type="button" disabled>
-          <span class="nav-icon">⌁</span>
-          Dashboard
-          <span class="soon">em breve</span>
+        <button class="nav-item" type="button" disabled title="Próxima etapa">
+          <span class="nav-icon">◫</span> Dashboard
+          <span class="soon">próximo</span>
         </button>
       </nav>
 
@@ -45,74 +40,173 @@
           <span class="status-dot"></span>
           <span>Verificando API...</span>
         </div>
-<small>V0.1.0</small>
+        <small>V0.2.0 · Schema V2</small>
       </div>
     </aside>
 
     <main class="main">
-      <header class="topbar">
-        <div>
-          <p class="eyebrow">PORTFÓLIO</p>
-          <h1>Obras</h1>
-          <p class="subtitle">Gerencie o planejamento e a evolução física das suas obras.</p>
-        </div>
-        <button id="newProjectBtn" class="primary-button" type="button">
-          <span>＋</span>
-          Nova obra
-        </button>
-      </header>
+      <section id="portfolioView">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">PORTFÓLIO</p>
+            <h1>Obras</h1>
+            <p class="subtitle">Cadastre uma obra e entre no planejamento físico.</p>
+          </div>
+          <button id="newProjectBtn" class="primary-button" type="button">
+            <span>＋</span> Nova obra
+          </button>
+        </header>
 
-      <section class="summary-grid">
-        <article class="summary-card">
-          <span class="summary-label">Obras ativas</span>
-          <strong id="activeCount">0</strong>
-          <small>em acompanhamento</small>
-        </article>
-        <article class="summary-card">
-          <span class="summary-label">Em planejamento</span>
-          <strong id="planningCount">0</strong>
-          <small>sem baseline ativa</small>
-        </article>
-        <article class="summary-card muted">
-          <span class="summary-label">Próxima evolução</span>
-          <strong>Motor</strong>
-          <small>WBS + dependências</small>
-        </article>
+        <section class="summary-grid">
+          <article class="summary-card">
+            <span class="summary-label">Obras ativas</span>
+            <strong id="activeCount">0</strong>
+            <small>em acompanhamento</small>
+          </article>
+          <article class="summary-card">
+            <span class="summary-label">Em planejamento</span>
+            <strong id="planningCount">0</strong>
+            <small>sem baseline ativa</small>
+          </article>
+          <article class="summary-card muted">
+            <span class="summary-label">Motor</span>
+            <strong>V1</strong>
+            <small>dependência percentual ativa</small>
+          </article>
+        </section>
+
+        <section class="content-card">
+          <div class="content-header">
+            <div>
+              <h2>Minhas obras</h2>
+              <p>Abra uma obra para montar EAP, atividades e dependências.</p>
+            </div>
+            <label class="search-box">
+              <span>⌕</span>
+              <input id="searchInput" type="search" placeholder="Pesquisar obra ou cliente">
+            </label>
+          </div>
+
+          <div id="loadingState" class="state-box">
+            <div class="spinner"></div>
+            <strong>Carregando obras...</strong>
+            <span>Consultando o banco do projeto.</span>
+          </div>
+
+          <div id="emptyState" class="state-box hidden">
+            <div class="empty-icon">▦</div>
+            <strong>Nenhuma obra cadastrada</strong>
+            <span>Cadastre a primeira obra para iniciar o planejamento.</span>
+            <button id="emptyCreateBtn" class="secondary-button" type="button">Criar primeira obra</button>
+          </div>
+
+          <div id="errorState" class="state-box error hidden">
+            <div class="empty-icon">!</div>
+            <strong>Não foi possível carregar</strong>
+            <span id="errorMessage">Verifique a conexão com o backend.</span>
+            <button id="retryBtn" class="secondary-button" type="button">Tentar novamente</button>
+          </div>
+
+          <div id="projectGrid" class="project-grid hidden"></div>
+        </section>
       </section>
 
-      <section class="content-card">
-        <div class="content-header">
-          <div>
-            <h2>Minhas obras</h2>
-            <p>Selecione uma obra para acessar o planejamento.</p>
+      <section id="planningView" class="hidden">
+        <header class="planning-topbar">
+          <div class="planning-title-row">
+            <button id="backToPortfolioBtn" class="icon-button back-button" type="button" aria-label="Voltar">←</button>
+            <div>
+              <p class="eyebrow">PLANEJAMENTO FÍSICO</p>
+              <h1 id="planningProjectName">Obra</h1>
+              <p id="planningProjectMeta" class="subtitle"></p>
+            </div>
           </div>
-          <label class="search-box">
-            <span>⌕</span>
-            <input id="searchInput" type="search" placeholder="Pesquisar obra ou cliente">
-          </label>
-        </div>
+          <div class="toolbar">
+            <button id="newWbsBtn" class="secondary-button" type="button">＋ Etapa EAP</button>
+            <button id="newActivityBtn" class="primary-button" type="button">＋ Atividade</button>
+            <button id="newDependencyBtn" class="secondary-button" type="button">⌁ Dependência</button>
+            <button id="recalculateBtn" class="ghost-button" type="button">↻ Recalcular</button>
+          </div>
+        </header>
 
-        <div id="loadingState" class="state-box">
-          <div class="spinner"></div>
-          <strong>Carregando obras...</strong>
-          <span>Consultando o banco do projeto.</span>
-        </div>
+        <section class="planning-summary">
+          <article>
+            <span>Atividades</span>
+            <strong id="activityCount">0</strong>
+          </article>
+          <article>
+            <span>Peso total</span>
+            <strong id="weightTotal">0%</strong>
+            <small id="weightHint"></small>
+          </article>
+          <article>
+            <span>Fim forecast</span>
+            <strong id="forecastEnd">—</strong>
+          </article>
+          <article>
+            <span>Críticas</span>
+            <strong id="criticalCount">0</strong>
+          </article>
+        </section>
 
-        <div id="emptyState" class="state-box hidden">
-          <div class="empty-icon">▦</div>
-          <strong>Nenhuma obra cadastrada</strong>
-          <span>Cadastre a primeira obra para iniciar o planejamento.</span>
-          <button id="emptyCreateBtn" class="secondary-button" type="button">Criar primeira obra</button>
-        </div>
+        <section class="planning-layout">
+          <div class="content-card planning-card">
+            <div class="content-header planning-header">
+              <div>
+                <h2>EAP + Cronograma</h2>
+                <p>Datas são calculadas pelo motor. Restrição de início significa “não iniciar antes de”.</p>
+              </div>
+              <label class="search-box compact-search">
+                <span>⌕</span>
+                <input id="activitySearchInput" type="search" placeholder="Filtrar atividade">
+              </label>
+            </div>
 
-        <div id="errorState" class="state-box error hidden">
-          <div class="empty-icon">!</div>
-          <strong>Não foi possível carregar</strong>
-          <span id="errorMessage">Verifique a conexão com o backend.</span>
-          <button id="retryBtn" class="secondary-button" type="button">Tentar novamente</button>
-        </div>
+            <div id="planningLoading" class="state-box compact-state hidden">
+              <div class="spinner"></div>
+              <strong>Calculando cronograma...</strong>
+            </div>
 
-        <div id="projectGrid" class="project-grid hidden"></div>
+            <div id="planningEmpty" class="state-box hidden">
+              <div class="empty-icon">⌁</div>
+              <strong>Planejamento vazio</strong>
+              <span>Crie uma etapa da EAP e depois cadastre atividades.</span>
+              <div class="empty-actions">
+                <button id="emptyWbsBtn" class="secondary-button" type="button">Criar etapa EAP</button>
+                <button id="emptyActivityBtn" class="primary-button" type="button">Criar atividade</button>
+              </div>
+            </div>
+
+            <div id="planningTableWrap" class="planning-table-wrap hidden">
+              <table class="planning-table">
+                <thead>
+                  <tr>
+                    <th class="col-code">Código / Atividade</th>
+                    <th class="num">Duração</th>
+                    <th class="num">Peso</th>
+                    <th class="num">Avanço</th>
+                    <th>Início forecast</th>
+                    <th>Fim forecast</th>
+                    <th class="num">Folga</th>
+                    <th>Status</th>
+                    <th class="actions-col"></th>
+                  </tr>
+                </thead>
+                <tbody id="planningTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <aside class="content-card dependency-card">
+            <div class="content-header slim-header">
+              <div>
+                <h2>Dependências</h2>
+                <p>Liberação por percentual + lag.</p>
+              </div>
+            </div>
+            <div id="dependencyList" class="dependency-list"></div>
+          </aside>
+        </section>
       </section>
     </main>
   </div>
@@ -126,7 +220,6 @@
         </div>
         <button id="closeProjectModalBtn" class="icon-button" type="button" aria-label="Fechar">×</button>
       </div>
-
       <form id="projectForm">
         <div class="form-grid">
           <label class="field">
@@ -154,9 +247,7 @@
             <textarea name="descricao" rows="3" placeholder="Descrição resumida da obra"></textarea>
           </label>
         </div>
-
         <div id="projectFormError" class="form-error hidden"></div>
-
         <div class="modal-actions">
           <button id="cancelProjectBtn" class="ghost-button" type="button">Cancelar</button>
           <button id="saveProjectBtn" class="primary-button" type="submit">Salvar obra</button>
@@ -165,8 +256,135 @@
     </section>
   </div>
 
-  <div id="toast" class="toast hidden"></div>
+  <div id="wbsModal" class="modal-backdrop hidden" aria-hidden="true">
+    <section class="modal small-modal" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <div><p class="eyebrow">EAP / WBS</p><h2>Nova etapa</h2></div>
+        <button id="closeWbsModalBtn" class="icon-button" type="button">×</button>
+      </div>
+      <form id="wbsForm">
+        <div class="form-grid two-cols">
+          <label class="field">
+            <span>Código EAP</span>
+            <input name="codigo_wbs" type="text" placeholder="Ex.: 2.1">
+          </label>
+          <label class="field">
+            <span>Ordem</span>
+            <input name="ordem" type="number" step="1" value="0">
+          </label>
+          <label class="field grow-2">
+            <span>Nome da etapa *</span>
+            <input name="nome" type="text" required placeholder="Ex.: Fundações">
+          </label>
+          <label class="field grow-2">
+            <span>Etapa pai</span>
+            <select name="id_wbs_pai" id="wbsParentSelect">
+              <option value="">Sem etapa pai</option>
+            </select>
+          </label>
+        </div>
+        <div id="wbsFormError" class="form-error hidden"></div>
+        <div class="modal-actions">
+          <button id="cancelWbsBtn" class="ghost-button" type="button">Cancelar</button>
+          <button id="saveWbsBtn" class="primary-button" type="submit">Salvar etapa</button>
+        </div>
+      </form>
+    </section>
+  </div>
 
+  <div id="activityModal" class="modal-backdrop hidden" aria-hidden="true">
+    <section class="modal" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <div><p class="eyebrow">CRONOGRAMA</p><h2 id="activityModalTitle">Nova atividade</h2></div>
+        <button id="closeActivityModalBtn" class="icon-button" type="button">×</button>
+      </div>
+      <form id="activityForm">
+        <input type="hidden" name="id">
+        <div class="form-grid">
+          <label class="field">
+            <span>Código</span>
+            <input name="codigo" type="text" placeholder="Ex.: 2.1.1">
+          </label>
+          <label class="field grow-2">
+            <span>Atividade *</span>
+            <input name="nome" type="text" required placeholder="Ex.: Execução das estacas">
+          </label>
+          <label class="field grow-2">
+            <span>Etapa EAP</span>
+            <select name="id_wbs" id="activityWbsSelect">
+              <option value="">Sem etapa</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Tipo</span>
+            <select name="id_tipo_atividade" id="activityTypeSelect">
+              <option value="">Sem tipo</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Duração planejada (dias úteis) *</span>
+            <input name="duracao_planejada_dias" type="number" min="1" step="1" value="1" required>
+          </label>
+          <label class="field">
+            <span>Peso físico (%)</span>
+            <input name="peso_percentual" type="number" min="0" max="100" step="0.01" value="0">
+          </label>
+          <label class="field">
+            <span>Restrição: não iniciar antes de</span>
+            <input name="restricao_inicio_minimo" type="date">
+          </label>
+          <label class="field">
+            <span>Ordem</span>
+            <input name="ordem" type="number" step="1" value="0">
+          </label>
+        </div>
+        <div id="activityFormError" class="form-error hidden"></div>
+        <div class="modal-actions">
+          <button id="deleteActivityBtn" class="danger-button hidden" type="button">Excluir</button>
+          <span class="modal-spacer"></span>
+          <button id="cancelActivityBtn" class="ghost-button" type="button">Cancelar</button>
+          <button id="saveActivityBtn" class="primary-button" type="submit">Salvar atividade</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <div id="dependencyModal" class="modal-backdrop hidden" aria-hidden="true">
+    <section class="modal small-modal" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <div><p class="eyebrow">RELAÇÃO</p><h2>Nova dependência</h2></div>
+        <button id="closeDependencyModalBtn" class="icon-button" type="button">×</button>
+      </div>
+      <form id="dependencyForm">
+        <div class="form-grid two-cols">
+          <label class="field grow-2">
+            <span>Predecessora *</span>
+            <select name="id_atividade_pai" id="dependencyParentSelect" required></select>
+          </label>
+          <label class="field grow-2">
+            <span>Sucessora *</span>
+            <select name="id_atividade_filha" id="dependencyChildSelect" required></select>
+          </label>
+          <label class="field">
+            <span>Liberação (%)</span>
+            <input name="percentual_liberacao" type="number" min="0" max="100" step="1" value="100" required>
+          </label>
+          <label class="field">
+            <span>Lag (dias úteis)</span>
+            <input name="lag_dias" type="number" step="1" value="0">
+          </label>
+        </div>
+        <div class="form-hint">Ex.: 70% + 2 dias = a sucessora só pode iniciar dois dias úteis após a predecessora atingir 70%.</div>
+        <div id="dependencyFormError" class="form-error hidden"></div>
+        <div class="modal-actions">
+          <button id="cancelDependencyBtn" class="ghost-button" type="button">Cancelar</button>
+          <button id="saveDependencyBtn" class="primary-button" type="submit">Criar dependência</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
   <script src="app.js"></script>
 </body>
 </html>
