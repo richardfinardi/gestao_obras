@@ -27,7 +27,7 @@
 
       <div class="sidebar-footer">
         <div id="apiStatus" class="api-status"><span class="status-dot"></span><span>Verificando API...</span></div>
-        <small>V0.3.0 · Schema V3</small>
+        <small>V0.3.2 · Schema V3</small>
       </div>
     </aside>
 
@@ -70,48 +70,49 @@
       </section>
 
       <section id="planningView" class="hidden">
-        <header class="planning-topbar">
+        <header class="planning-topbar planning-topbar-v2">
           <div class="planning-title-row">
             <button id="backToPortfolioBtn" class="icon-button back-button" type="button">←</button>
             <div>
-              <p class="eyebrow">PLANEJAMENTO FÍSICO</p>
+              <div class="planning-kicker">PLANEJAMENTO FÍSICO</div>
               <h1 id="planningProjectName">Obra</h1>
               <p id="planningProjectMeta" class="subtitle"></p>
             </div>
           </div>
           <div class="toolbar">
-            <button id="screenHelpBtn" class="secondary-button" type="button">? Ajuda desta tela</button>
-            <button id="effectivateTopBtn" class="primary-button" type="button">✓ Efetivar planejamento</button>
+            <button id="screenHelpBtn" class="secondary-button" type="button">? Como usar</button>
+            <button id="effectivateTopBtn" class="primary-button" type="button">✓ Efetivar</button>
           </div>
         </header>
 
-        <div class="context-guide">
-          <div>
-            <strong>Como usar</strong>
-            <span>Monte o planejamento livremente na grade. Nada é gravado no banco enquanto você edita.</span>
-          </div>
-          <div class="guide-flow">
-            <span>1. Crie etapas</span><b>→</b><span>2. Adicione atividades</span><b>→</b><span>3. Defina dependências</span><b>→</b><span>4. Efetive</span>
-          </div>
-        </div>
-
-        <section class="planning-summary">
-          <article><span>Atividades <button class="help-dot" data-help="atividade">?</button></span><strong id="activityCount">0</strong></article>
-          <article><span>Peso total <button class="help-dot" data-help="peso">?</button></span><strong id="weightTotal">0</strong><small>não precisa somar 100</small></article>
-          <article><span>Fim previsto <button class="help-dot" data-help="previsto">?</button></span><strong id="forecastEnd">—</strong></article>
-          <article><span>Críticas <button class="help-dot" data-help="critica">?</button></span><strong id="criticalCount">0</strong></article>
+        <section class="planning-metrics">
+          <div class="metric"><span>Atividades <button type="button" class="help-dot" data-help="atividade">?</button></span><strong id="activityCount">0</strong></div>
+          <div class="metric"><span>Peso total <button type="button" class="help-dot" data-help="peso">?</button></span><strong id="weightTotal">0</strong></div>
+          <div class="metric"><span>Fim previsto <button type="button" class="help-dot" data-help="previsto">?</button></span><strong id="forecastEnd">—</strong></div>
+          <div class="metric"><span>Críticas <button type="button" class="help-dot" data-help="critica">?</button></span><strong id="criticalCount">0</strong></div>
+          <div class="metric metric-wide"><span id="draftStatus" class="draft-status saved">Planejamento efetivado</span><small>Edite livremente e grave tudo de uma vez.</small></div>
         </section>
 
         <section class="content-card planner-card">
-          <div class="planner-head">
-            <div>
-              <div class="planner-title-line">
-                <h2>Etapas e atividades</h2>
-                <span id="draftStatus" class="draft-status saved">Planejamento efetivado</span>
-              </div>
-              <p>Edite diretamente nas células. Os códigos são gerados automaticamente.</p>
+          <div class="planner-commandbar">
+            <div class="planner-actions-left">
+              <button id="addStageBtn" class="command-primary" type="button">＋ Etapa</button>
+              <button id="addActivityBtn" class="command-primary" type="button">＋ Atividade</button>
+              <span class="command-separator"></span>
+              <button id="addChildBtn" class="command-button" type="button">＋ Filho</button>
+              <button id="addSiblingBtn" class="command-button" type="button">＋ Irmão</button>
+              <button id="duplicateBtn" class="command-button" type="button">⧉ Duplicar</button>
+              <button id="deleteRowBtn" class="command-button danger-command" type="button">⌫ Excluir</button>
+              <span class="command-separator"></span>
+              <button id="moveUpBtn" class="command-icon" type="button" title="Mover para cima">↑</button>
+              <button id="moveDownBtn" class="command-icon" type="button" title="Mover para baixo">↓</button>
+              <button id="expandAllBtn" class="command-button" type="button">Expandir</button>
+              <button id="collapseAllBtn" class="command-button" type="button">Recolher</button>
             </div>
-            <label class="search-box compact-search"><span>⌕</span><input id="activitySearchInput" type="search" placeholder="Filtrar linhas"></label>
+            <div class="planner-commandbar-right">
+              <label class="search-box compact-search"><span>⌕</span><input id="activitySearchInput" type="search" placeholder="Pesquisar"></label>
+              <button id="effectivateBtn" class="command-effectivate" type="button">✓ Efetivar</button>
+            </div>
           </div>
 
           <div id="planningLoading" class="state-box compact-state hidden"><div class="spinner"></div><strong>Carregando planejamento...</strong></div>
@@ -123,15 +124,15 @@
                   <th class="sel-col"></th>
                   <th class="code-col">Nº</th>
                   <th class="level-col">Nível</th>
-                  <th class="kind-col">Tipo <button class="help-dot" data-help="linha_tipo">?</button></th>
-                  <th class="name-col">Etapa / Atividade <button class="help-dot" data-help="etapa">?</button></th>
-                  <th class="activity-type-col">Classificação <button class="help-dot" data-help="tipo_atividade">?</button></th>
-                  <th class="number-col">Duração <button class="help-dot" data-help="duracao">?</button></th>
-                  <th class="number-col">Peso <button class="help-dot" data-help="peso">?</button></th>
-                  <th class="date-col">Não iniciar antes de <button class="help-dot" data-help="restricao">?</button></th>
-                  <th class="dependency-col">Predecessora <button class="help-dot" data-help="dependencia">?</button></th>
-                  <th class="number-col">Liberação % <button class="help-dot" data-help="liberacao">?</button></th>
-                  <th class="number-col">Lag <button class="help-dot" data-help="lag">?</button></th>
+                  <th class="kind-col">Tipo <button type="button" class="help-dot" data-help="linha_tipo">?</button></th>
+                  <th class="name-col">Etapa / Atividade <button type="button" class="help-dot" data-help="etapa">?</button></th>
+                  <th class="activity-type-col">Classificação <button type="button" class="help-dot" data-help="tipo_atividade">?</button></th>
+                  <th class="number-col">Duração <button type="button" class="help-dot" data-help="duracao">?</button></th>
+                  <th class="number-col">Peso <button type="button" class="help-dot" data-help="peso">?</button></th>
+                  <th class="date-col">Não iniciar antes de <button type="button" class="help-dot" data-help="restricao">?</button></th>
+                  <th class="dependency-col">Predecessora <button type="button" class="help-dot" data-help="dependencia">?</button></th>
+                  <th class="number-col">Liberação % <button type="button" class="help-dot" data-help="liberacao">?</button></th>
+                  <th class="number-col">Lag <button type="button" class="help-dot" data-help="lag">?</button></th>
                   <th class="date-col">Início previsto</th>
                   <th class="date-col">Fim previsto</th>
                   <th class="status-col">Status</th>
@@ -146,21 +147,7 @@
             <span>Comece criando uma etapa ou uma atividade.</span>
           </div>
 
-          <div class="planner-actions">
-            <div class="planner-actions-left">
-              <button id="addStageBtn" class="orange-button" type="button">＋ Criar etapa</button>
-              <button id="addActivityBtn" class="orange-button" type="button">＋ Criar atividade</button>
-              <button id="addChildBtn" class="secondary-button" type="button">＋ Add filho</button>
-              <button id="addSiblingBtn" class="secondary-button" type="button">＋ Add irmão</button>
-              <button id="duplicateBtn" class="secondary-button" type="button">⧉ Duplicar</button>
-              <button id="deleteRowBtn" class="danger-button" type="button">🗑 Excluir</button>
-              <button id="moveUpBtn" class="secondary-button" type="button">↑</button>
-              <button id="moveDownBtn" class="secondary-button" type="button">↓</button>
-              <button id="expandAllBtn" class="secondary-button" type="button">Expandir tudo</button>
-              <button id="collapseAllBtn" class="secondary-button" type="button">Recolher tudo</button>
-            </div>
-            <button id="effectivateBtn" class="primary-button effectivate-button" type="button">✓ Efetivar planejamento</button>
-          </div>
+
         </section>
       </section>
     </main>
@@ -208,6 +195,12 @@
     <div id="dependencyEditor"></div>
     <button id="addDependencyRelationBtn" class="secondary-button full" type="button">＋ Adicionar predecessora</button>
   </aside>
+
+  <div id="helpPopover" class="help-popover hidden" role="dialog" aria-live="polite">
+    <button id="helpPopoverClose" class="help-popover-close" type="button">×</button>
+    <strong id="helpPopoverTitle"></strong>
+    <div id="helpPopoverBody"></div>
+  </div>
 
   <div id="toast" class="toast hidden"></div>
   <script src="app.js"></script>
