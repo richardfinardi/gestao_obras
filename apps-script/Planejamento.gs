@@ -24,6 +24,12 @@ function listarWbs_(idObra) {
     .filter(function(item) {
       return String(item.ID_OBRA) === String(idObra) && asBoolean_(item.ATIVA, true);
     })
+    .map(function(item) {
+      if (item.PESO_RELATIVO === '' || item.PESO_RELATIVO === null || item.PESO_RELATIVO === undefined) {
+        item.PESO_RELATIVO = Number(item.PESO_PERCENTUAL || 0);
+      }
+      return item;
+    })
     .sort(function(a, b) {
       const oa = Number(a.ORDEM || 0);
       const ob = Number(b.ORDEM || 0);
@@ -97,8 +103,13 @@ function criarAtividade_(payload) {
   }
 
   const duracao = Math.max(1, Math.round(asNumber_(payload.DURACAO_PLANEJADA_DIAS || payload.duracao_planejada_dias, 1)));
-  const peso = asNumber_(payload.PESO_PERCENTUAL || payload.peso_percentual, 0);
-  if (peso < 0 || peso > 100) throw new Error('PESO_INVALIDO');
+  const peso = asNumber_(
+    payload.PESO_RELATIVO !== undefined ? payload.PESO_RELATIVO :
+    (payload.peso_relativo !== undefined ? payload.peso_relativo :
+    (payload.PESO_PERCENTUAL !== undefined ? payload.PESO_PERCENTUAL : payload.peso_percentual)),
+    0
+  );
+  if (peso < 0) throw new Error('PESO_INVALIDO');
 
   const restricao = parseDateOnly_(payload.RESTRICAO_INICIO_MINIMO || payload.restricao_inicio_minimo);
   const agora = now_();
@@ -113,7 +124,8 @@ function criarAtividade_(payload) {
     ID_EMPRESA: String(payload.ID_EMPRESA || payload.id_empresa || '').trim(),
     ID_RESPONSAVEL: String(payload.ID_RESPONSAVEL || payload.id_responsavel || '').trim(),
     DURACAO_PLANEJADA_DIAS: duracao,
-    PESO_PERCENTUAL: peso,
+    PESO_PERCENTUAL: '',
+    PESO_RELATIVO: peso,
     RESTRICAO_INICIO_MINIMO: restricao || '',
     PERCENTUAL_ATUAL: 0,
     DATA_INICIO_FORECAST: '',
@@ -163,7 +175,7 @@ function atualizarAtividade_(idAtividade, payload) {
     ID_EMPRESA: ['ID_EMPRESA','id_empresa'],
     ID_RESPONSAVEL: ['ID_RESPONSAVEL','id_responsavel'],
     DURACAO_PLANEJADA_DIAS: ['DURACAO_PLANEJADA_DIAS','duracao_planejada_dias'],
-    PESO_PERCENTUAL: ['PESO_PERCENTUAL','peso_percentual'],
+    PESO_RELATIVO: ['PESO_RELATIVO','peso_relativo','PESO_PERCENTUAL','peso_percentual'],
     RESTRICAO_INICIO_MINIMO: ['RESTRICAO_INICIO_MINIMO','restricao_inicio_minimo'],
     ORDEM: ['ORDEM','ordem'],
     ATIVA: ['ATIVA','ativa']
@@ -175,9 +187,9 @@ function atualizarAtividade_(idAtividade, payload) {
     let value = payload[alias];
 
     if (target === 'DURACAO_PLANEJADA_DIAS') value = Math.max(1, Math.round(asNumber_(value, 1)));
-    if (target === 'PESO_PERCENTUAL') {
+    if (target === 'PESO_RELATIVO') {
       value = asNumber_(value, 0);
-      if (value < 0 || value > 100) throw new Error('PESO_INVALIDO');
+      if (value < 0) throw new Error('PESO_INVALIDO');
     }
     if (target === 'RESTRICAO_INICIO_MINIMO') value = parseDateOnly_(value) || '';
     if (target === 'ORDEM') value = asNumber_(value, 0);
@@ -195,7 +207,7 @@ function atualizarAtividade_(idAtividade, payload) {
   const updated = updateObjectById_(
     'ATIVIDADES','ID_ATIVIDADE',idAtividade,changes,
     ['ID_WBS','NOME','ID_TIPO_ATIVIDADE','ID_EMPRESA','ID_RESPONSAVEL',
-     'DURACAO_PLANEJADA_DIAS','PESO_PERCENTUAL','RESTRICAO_INICIO_MINIMO',
+     'DURACAO_PLANEJADA_DIAS','PESO_RELATIVO','RESTRICAO_INICIO_MINIMO',
      'DURACAO_PROJETADA_DIAS','ORDEM','ATIVA','ATUALIZADO_EM']
   );
 
