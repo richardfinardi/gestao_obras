@@ -1,6 +1,6 @@
 const CONFIG = Object.freeze({
   API_URL: 'https://script.google.com/macros/s/AKfycbw6cRAPlwVzNOURoLNsTJ47xyezz0LStCuZyNpW2wT97f9pj3RADUn1L1MdqTq9Tm_b/exec',
-  VERSION: '0.2.0'
+  VERSION: '0.2.1'
 });
 
 const state = {
@@ -669,7 +669,6 @@ function openActivityModal(activity = null) {
   if (activity) {
     el.activityModalTitle.textContent = 'Editar atividade';
     el.activityForm.elements.id.value = activity.ID_ATIVIDADE || '';
-    el.activityForm.elements.codigo.value = activity.CODIGO || '';
     el.activityForm.elements.nome.value = activity.NOME || '';
     el.activityForm.elements.id_wbs.value = activity.ID_WBS || '';
     el.activityForm.elements.id_tipo_atividade.value = activity.ID_TIPO_ATIVIDADE || '';
