@@ -25,10 +25,6 @@ function handleApi_(e, method) {
 
     let result;
 
-    if (action !== 'health') {
-      validarChaveAcesso_(Object.assign({}, params, body));
-    }
-
     switch (action) {
       case 'health':
         result = {
@@ -85,9 +81,7 @@ function apiMessage_(code) {
     METODO_NAO_PERMITIDO: 'Método HTTP não permitido para esta ação.',
     PAYLOAD_JSON_INVALIDO: 'O corpo da requisição contém JSON inválido.',
     DATA_INVALIDA: 'Uma das datas informadas é inválida.',
-    NUMERO_INVALIDO: 'Um dos valores numéricos informados é inválido.',
-    CHAVE_ACESSO_NAO_CONFIGURADA: 'A chave de acesso do backend ainda não foi configurada.',
-    ACESSO_NEGADO: 'Chave de acesso inválida.'
+    NUMERO_INVALIDO: 'Um dos valores numéricos informados é inválido.'
   };
 
   return messages[code] || code;
