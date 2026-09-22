@@ -28,3 +28,26 @@ Sistema web de planejamento e acompanhamento físico de obras.
 ## Primeiro passo
 
 Executar `setupSistema()` no Apps Script ligado à planilha do projeto. A função cria todas as abas e campos automaticamente e pode ser executada novamente com segurança para adicionar campos futuros.
+
+
+## Estado atual
+
+### Banco
+O banco oficial `GESTAO_OBRAS_DB` já foi inicializado com 15 abas e schema V1.
+
+### Backend V1
+Implementado no repositório:
+- `Code.gs`: schema e bootstrap.
+- `Utils.gs`: utilidades e respostas JSON.
+- `Db.gs`: acesso centralizado ao Sheets.
+- `Obras.gs`: regras e CRUD inicial de obras.
+- `Api.gs`: endpoints HTTP iniciais.
+
+Rotas iniciais:
+- `GET ?action=health`
+- `GET ?action=obras.list`
+- `GET ?action=obras.get&id=...`
+- `POST ?action=obras.create`
+- `POST ?action=obras.update&id=...`
+
+A próxima etapa é ativar/publicar o projeto Google Apps Script e então conectar o frontend GitHub Pages.
