@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#111827">
+  <title>Gestão de Obras</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">GO</div>
+        <div>
+          <strong>Gestão de Obras</strong>
+          <span>Planejamento físico</span>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-item active" type="button">
+          <span class="nav-icon">▦</span>
+          Obras
+        </button>
+        <button class="nav-item" type="button" disabled>
+          <span class="nav-icon">⌁</span>
+          Planejamento
+          <span class="soon">em breve</span>
+        </button>
+        <button class="nav-item" type="button" disabled>
+          <span class="nav-icon">✓</span>
+          Diário de avanço
+          <span class="soon">em breve</span>
+        </button>
+        <button class="nav-item" type="button" disabled>
+          <span class="nav-icon">⌁</span>
+          Dashboard
+          <span class="soon">em breve</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div id="apiStatus" class="api-status">
+          <span class="status-dot"></span>
+          <span>Verificando API...</span>
+        </div>
+        <button id="changeKeyBtn" class="link-button" type="button">Trocar chave de acesso</button>
+        <small>V0.1.0</small>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">PORTFÓLIO</p>
+          <h1>Obras</h1>
+          <p class="subtitle">Gerencie o planejamento e a evolução física das suas obras.</p>
+        </div>
+        <button id="newProjectBtn" class="primary-button" type="button">
+          <span>＋</span>
+          Nova obra
+        </button>
+      </header>
+
+      <section class="summary-grid">
+        <article class="summary-card">
+          <span class="summary-label">Obras ativas</span>
+          <strong id="activeCount">0</strong>
+          <small>em acompanhamento</small>
+        </article>
+        <article class="summary-card">
+          <span class="summary-label">Em planejamento</span>
+          <strong id="planningCount">0</strong>
+          <small>sem baseline ativa</small>
+        </article>
+        <article class="summary-card muted">
+          <span class="summary-label">Próxima evolução</span>
+          <strong>Motor</strong>
+          <small>WBS + dependências</small>
+        </article>
+      </section>
+
+      <section class="content-card">
+        <div class="content-header">
+          <div>
+            <h2>Minhas obras</h2>
+            <p>Selecione uma obra para acessar o planejamento.</p>
+          </div>
+          <label class="search-box">
+            <span>⌕</span>
+            <input id="searchInput" type="search" placeholder="Pesquisar obra ou cliente">
+          </label>
+        </div>
+
+        <div id="loadingState" class="state-box">
+          <div class="spinner"></div>
+          <strong>Carregando obras...</strong>
+          <span>Consultando o banco do projeto.</span>
+        </div>
+
+        <div id="emptyState" class="state-box hidden">
+          <div class="empty-icon">▦</div>
+          <strong>Nenhuma obra cadastrada</strong>
+          <span>Cadastre a primeira obra para iniciar o planejamento.</span>
+          <button id="emptyCreateBtn" class="secondary-button" type="button">Criar primeira obra</button>
+        </div>
+
+        <div id="errorState" class="state-box error hidden">
+          <div class="empty-icon">!</div>
+          <strong>Não foi possível carregar</strong>
+          <span id="errorMessage">Verifique a conexão com o backend.</span>
+          <button id="retryBtn" class="secondary-button" type="button">Tentar novamente</button>
+        </div>
+
+        <div id="projectGrid" class="project-grid hidden"></div>
+      </section>
+    </main>
+  </div>
+
+  <div id="accessModal" class="modal-backdrop hidden" aria-hidden="true">
+    <section class="modal small-modal" role="dialog" aria-modal="true" aria-labelledby="accessTitle">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">ACESSO AO BACKEND</p>
+          <h2 id="accessTitle">Informe sua chave</h2>
+        </div>
+      </div>
+      <p class="modal-help">A chave fica armazenada somente neste navegador e não é gravada no GitHub.</p>
+      <label class="field">
+        <span>Chave de acesso</span>
+        <input id="accessKeyInput" type="password" autocomplete="off" placeholder="Cole a chave gerada no Apps Script">
+      </label>
+      <div id="accessError" class="form-error hidden"></div>
+      <div class="modal-actions">
+        <button id="saveKeyBtn" class="primary-button full" type="button">Conectar ao banco</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="projectModal" class="modal-backdrop hidden" aria-hidden="true">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="projectModalTitle">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">CADASTRO</p>
+          <h2 id="projectModalTitle">Nova obra</h2>
+        </div>
+        <button id="closeProjectModalBtn" class="icon-button" type="button" aria-label="Fechar">×</button>
+      </div>
+
+      <form id="projectForm">
+        <div class="form-grid">
+          <label class="field">
+            <span>Código</span>
+            <input name="codigo" type="text" placeholder="Ex.: OBRA-001">
+          </label>
+          <label class="field grow-2">
+            <span>Nome da obra *</span>
+            <input name="nome" type="text" required placeholder="Ex.: Centro Logístico Jundiaí">
+          </label>
+          <label class="field grow-3">
+            <span>Cliente</span>
+            <input name="cliente" type="text" placeholder="Nome do cliente">
+          </label>
+          <label class="field">
+            <span>Início contratual</span>
+            <input name="data_inicio_contratual" type="date">
+          </label>
+          <label class="field">
+            <span>Fim contratual</span>
+            <input name="data_fim_contratual" type="date">
+          </label>
+          <label class="field grow-3">
+            <span>Descrição</span>
+            <textarea name="descricao" rows="3" placeholder="Descrição resumida da obra"></textarea>
+          </label>
+        </div>
+
+        <div id="projectFormError" class="form-error hidden"></div>
+
+        <div class="modal-actions">
+          <button id="cancelProjectBtn" class="ghost-button" type="button">Cancelar</button>
+          <button id="saveProjectBtn" class="primary-button" type="submit">Salvar obra</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
