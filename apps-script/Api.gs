@@ -13,6 +13,10 @@
  * POST ?action=dependencias.create|dependencias.delete
  * POST ?action=cronograma.recalcular
  * POST ?action=planejamento.efetivar
+ * POST ?action=programacao.get|programacao.efetivar
+ * POST ?action=diario.get|diario.salvar
+ * POST ?action=dashboard.get
+ * POST ?action=cadastros.get|equipes.save|tipos.save
  */
 
 function doGet(e) {
@@ -142,6 +146,51 @@ function handleApi_(e, method) {
         break;
       }
 
+      case 'programacao.get': {
+        const idObra = body.id_obra || body.ID_OBRA || params.id_obra;
+        if (!idObra) throw new Error('ID_OBRA_OBRIGATORIO');
+        result = obterProgramacao_(idObra);
+        break;
+      }
+
+      case 'programacao.efetivar':
+        if (method !== 'POST') throw new Error('METODO_NAO_PERMITIDO');
+        result = efetivarProgramacao_(body);
+        break;
+
+      case 'diario.get': {
+        const idObra = body.id_obra || body.ID_OBRA || params.id_obra;
+        if (!idObra) throw new Error('ID_OBRA_OBRIGATORIO');
+        result = obterDiario_(idObra, body.data || params.data);
+        break;
+      }
+
+      case 'diario.salvar':
+        if (method !== 'POST') throw new Error('METODO_NAO_PERMITIDO');
+        result = salvarDiario_(body);
+        break;
+
+      case 'dashboard.get': {
+        const idObra = body.id_obra || body.ID_OBRA || params.id_obra;
+        if (!idObra) throw new Error('ID_OBRA_OBRIGATORIO');
+        result = obterDashboard_(idObra);
+        break;
+      }
+
+      case 'cadastros.get':
+        result = obterCadastros_();
+        break;
+
+      case 'equipes.save':
+        if (method !== 'POST') throw new Error('METODO_NAO_PERMITIDO');
+        result = salvarEquipe_(body);
+        break;
+
+      case 'tipos.save':
+        if (method !== 'POST') throw new Error('METODO_NAO_PERMITIDO');
+        result = salvarTipoAtividade_(body);
+        break;
+
       default:
         return jsonOutput_(fail_('ROTA_NAO_ENCONTRADA', 'Ação não reconhecida.', { action: action }));
     }
@@ -192,7 +241,14 @@ function apiMessage_(code) {
     DEPENDENCIA_NAO_ENCONTRADA: 'Dependência não encontrada.',
     ID_DEPENDENCIA_OBRIGATORIO: 'Informe a dependência.',
     DEPENDENCIA_CICLICA: 'A dependência criaria um ciclo no cronograma.',
-    CALENDARIO_SEM_DIAS_UTEIS: 'O calendário da obra não possui dias úteis válidos.'
+    CALENDARIO_SEM_DIAS_UTEIS: 'O calendário da obra não possui dias úteis válidos.',
+    NOME_EQUIPE_OBRIGATORIO: 'Informe o nome da equipe.',
+    NOME_TIPO_OBRIGATORIO: 'Informe o nome do tipo de atividade.',
+    PROGRAMACAO_DADOS_OBRIGATORIOS: 'Informe a obra e a atividade da programação.',
+    PROGRAMACAO_DEVE_FECHAR_100: 'A programação diária da atividade precisa somar 100%.',
+    PROGRAMACAO_DATA_OBRIGATORIA: 'Toda linha de programação precisa ter uma data.',
+    PROGRAMACAO_PERCENTUAL_INVALIDO: 'A evolução planejada do dia deve estar entre 0 e 100%.',
+    EXECUCAO_PERCENTUAL_INVALIDO: 'A evolução executada do dia deve estar entre 0 e 100%.'
   };
 
   return messages[code] || code;
