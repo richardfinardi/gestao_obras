@@ -57,6 +57,7 @@ HELP.cadastros = {
 };
 
 const v4state = {
+  backendReady:false,
   programmingData:null,
   programmingActivityId:null,
   programmingRows:[],
@@ -70,9 +71,9 @@ const v4state = {
 const v4el = {};
 
 window.enableProjectNavV4 = function(){
-  ['navProgramacao','navDiario','navDashboard'].forEach(id=>{
+  ['navProgramacao','navDiario','navDashboard','navCadastros'].forEach(id=>{
     const node=document.querySelector('#'+id);
-    if(node) node.disabled=!state.obraAtual;
+    if(node) node.disabled=!state.obraAtual || !v4state.backendReady;
   });
 };
 
@@ -120,6 +121,8 @@ function bootV4(){
     hide(el.portfolioView);
   });
 
+  checkBackendV4();
+
   el.plannerBody?.addEventListener('click',e=>{
     const btn=e.target.closest('[data-teams]');
     if(!btn) return;
@@ -127,6 +130,24 @@ function bootV4(){
     if(!tr) return;
     openTeamDrawerV4(tr.dataset.key);
   });
+}
+
+async function checkBackendV4(){
+  try{
+    const r=await fetch(CONFIG.API_URL+'?action=health',{cache:'no-store'});
+    const p=await r.json();
+    v4state.backendReady=Boolean(p?.ok && String(p?.data?.schemaVersion)==='4');
+  }catch(_){
+    v4state.backendReady=false;
+  }
+  window.enableProjectNavV4();
+  document.body.classList.toggle('v4-backend-pending',!v4state.backendReady);
+}
+
+function requireBackendV4(){
+  if(v4state.backendReady) return true;
+  toast('A atualização V4 do backend está aguardando reautorização do Google.',true);
+  return false;
 }
 
 function bindNavigationV4(){
@@ -162,6 +183,7 @@ function showPlanningFromV4(){
 }
 
 async function openProgrammingV4(){
+  if(!requireBackendV4()) return;
   if(!state.obraAtual) return;
   hideAllMainViewsV4(); show(v4el.programmingView); activateNavV4('navProgramacao');
   v4el.programmingProjectName.textContent=state.obraAtual.NOME||'Obra';
@@ -348,6 +370,7 @@ function bindDiaryV4(){
 }
 
 async function openDiaryV4(){
+  if(!requireBackendV4()) return;
   if(!state.obraAtual) return;
   hideAllMainViewsV4(); show(v4el.diaryView); activateNavV4('navDiario');
   v4el.diaryProjectName.textContent=state.obraAtual.NOME||'Obra';
@@ -408,6 +431,7 @@ async function saveDiaryV4(){
 }
 
 async function openDashboardV4(){
+  if(!requireBackendV4()) return;
   if(!state.obraAtual) return;
   hideAllMainViewsV4();show(v4el.dashboardView);activateNavV4('navDashboard');
   v4el.dashboardProjectName.textContent=state.obraAtual.NOME||'Obra';
@@ -480,6 +504,7 @@ function bindCadastrosV4(){
 }
 
 async function openCadastrosV4(){
+  if(!requireBackendV4()) return;
   hideAllMainViewsV4();show(v4el.cadastrosView);activateNavV4('navCadastros');
   await loadCadastrosV4();
 }
