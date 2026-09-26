@@ -21,13 +21,15 @@
       <nav class="nav">
         <button class="nav-item active" id="navObras" type="button"><span class="nav-icon">▦</span> Obras</button>
         <button class="nav-item" id="navPlanejamento" type="button" disabled><span class="nav-icon">⌁</span> Planejamento</button>
-        <button class="nav-item" type="button" disabled><span class="nav-icon">✓</span> Diário de avanço <span class="soon">próximo</span></button>
-        <button class="nav-item" type="button" disabled><span class="nav-icon">◫</span> Dashboard <span class="soon">próximo</span></button>
+        <button class="nav-item" id="navProgramacao" type="button" disabled><span class="nav-icon">▦</span> Programação diária</button>
+        <button class="nav-item" id="navDiario" type="button" disabled><span class="nav-icon">✓</span> Diário de obra</button>
+        <button class="nav-item" id="navDashboard" type="button" disabled><span class="nav-icon">◫</span> Dashboard</button>
+        <button class="nav-item" id="navCadastros" type="button"><span class="nav-icon">⚙</span> Cadastros</button>
       </nav>
 
       <div class="sidebar-footer">
         <div id="apiStatus" class="api-status"><span class="status-dot"></span><span>Verificando API...</span></div>
-        <small>V0.3.2 · Schema V3</small>
+        <small>V0.4.0 · Schema V4</small>
       </div>
     </aside>
 
@@ -126,6 +128,8 @@
                   <th class="level-col">Nível</th>
                   <th class="kind-col">Item <button type="button" class="help-dot" data-help="linha_tipo">?</button></th>
                   <th class="name-col">Etapa / Atividade <button type="button" class="help-dot" data-help="etapa">?</button></th>
+                  <th class="front-col">Frente / Área <button type="button" class="help-dot" data-help="frente">?</button></th>
+                  <th class="teams-col">Equipe(s) <button type="button" class="help-dot" data-help="equipes">?</button></th>
                   <th class="activity-type-col">Tipo <button type="button" class="help-dot" data-help="tipo_atividade">?</button></th>
                   <th class="number-col">Duração <button type="button" class="help-dot" data-help="duracao">?</button></th>
                   <th class="number-col">Peso <button type="button" class="help-dot" data-help="peso">?</button></th>
@@ -149,6 +153,90 @@
 
 
         </section>
+      </section>
+
+      <section id="programmingView" class="hidden operational-view">
+        <header class="planning-topbar planning-topbar-v2">
+          <div class="planning-title-row">
+            <button id="backFromProgrammingBtn" class="icon-button back-button" type="button">←</button>
+            <div><div class="planning-kicker">PROGRAMAÇÃO DIÁRIA</div><h1 id="programmingProjectName">Obra</h1><p class="subtitle">Distribua cada atividade pelos dias e planeje a quantidade de pessoas por equipe.</p></div>
+          </div>
+          <button class="secondary-button" type="button" data-help="programacao">? Como usar</button>
+        </header>
+        <div class="split-workspace">
+          <aside class="activity-selector-panel">
+            <div class="panel-head"><strong>Atividades</strong><input id="programmingSearch" type="search" placeholder="Pesquisar"></div>
+            <div id="programmingActivityList" class="activity-selector-list"></div>
+          </aside>
+          <section class="workspace-panel">
+            <div id="programmingEmpty" class="state-box compact-state"><strong>Selecione uma atividade</strong><span>Escolha uma atividade à esquerda para programar os dias.</span></div>
+            <div id="programmingEditor" class="hidden">
+              <div class="workspace-titlebar">
+                <div><span id="programmingCode" class="project-code"></span><h2 id="programmingActivityName"></h2><p id="programmingActivityMeta"></p></div>
+                <div class="toolbar">
+                  <button id="autoDistributeBtn" class="secondary-button" type="button">⚡ Distribuir automaticamente</button>
+                  <button class="help-dot" type="button" data-help="distribuir_programacao">?</button>
+                  <button id="saveProgrammingBtn" class="primary-button" type="button">✓ Efetivar programação</button>
+                </div>
+              </div>
+              <div class="inline-info"><strong id="programmingSum">0%</strong><span>programado da atividade</span><small id="programmingValidation"></small></div>
+              <div class="simple-table-wrap">
+                <table class="simple-table">
+                  <thead id="programmingHead"></thead>
+                  <tbody id="programmingBody"></tbody>
+                </table>
+              </div>
+              <button id="addProgrammingDayBtn" class="secondary-button" type="button">＋ Adicionar dia</button>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section id="diaryView" class="hidden operational-view">
+        <header class="planning-topbar planning-topbar-v2">
+          <div class="planning-title-row">
+            <button id="backFromDiaryBtn" class="icon-button back-button" type="button">←</button>
+            <div><div class="planning-kicker">DIÁRIO DE OBRA</div><h1 id="diaryProjectName">Obra</h1><p class="subtitle">Registre o que realmente aconteceu no dia.</p></div>
+          </div>
+          <div class="toolbar"><label class="date-toolbar">Data <input id="diaryDate" type="date"></label><button class="secondary-button" type="button" data-help="diario">? Como usar</button><button id="saveDiaryBtn" class="primary-button" type="button">✓ Salvar diário</button></div>
+        </header>
+        <section class="content-card">
+          <div class="diary-summary"><span>Planejado no dia: <strong id="diaryPlannedCount">0 atividades</strong></span><span>Registre <strong>evolução do dia</strong>, equipe real e observação.</span></div>
+          <div class="simple-table-wrap">
+            <table class="simple-table diary-table">
+              <thead><tr><th>Atividade</th><th>Previsto hoje <button class="help-dot" type="button" data-help="previsto_dia">?</button></th><th>Acumulado</th><th>Executado hoje <button class="help-dot" type="button" data-help="executado_dia">?</button></th><th>Equipe / pessoas reais <button class="help-dot" type="button" data-help="equipe_real">?</button></th><th>Observação</th></tr></thead>
+              <tbody id="diaryBody"></tbody>
+            </table>
+          </div>
+          <div id="diaryEmpty" class="state-box compact-state hidden"><strong>Nada programado para esta data</strong><span>Atividades em execução também aparecem automaticamente.</span></div>
+        </section>
+      </section>
+
+      <section id="dashboardView" class="hidden operational-view">
+        <header class="planning-topbar planning-topbar-v2">
+          <div class="planning-title-row">
+            <button id="backFromDashboardBtn" class="icon-button back-button" type="button">←</button>
+            <div><div class="planning-kicker">RESUMO EXECUTIVO</div><h1 id="dashboardProjectName">Obra</h1><p class="subtitle">Situação atual calculada automaticamente a partir do planejamento e do diário.</p></div>
+          </div>
+          <button class="secondary-button" type="button" data-help="dashboard">? Entenda os indicadores</button>
+        </header>
+        <section id="dashboardKpis" class="dashboard-kpis"></section>
+        <div class="dashboard-grid">
+          <section class="content-card dashboard-card"><div class="card-title"><h2>Curva de avanço</h2><button class="help-dot" type="button" data-help="curva_s">?</button></div><div id="curveChart" class="chart-box"></div></section>
+          <section class="content-card dashboard-card"><div class="card-title"><h2>Carga por equipe</h2><button class="help-dot" type="button" data-help="carga_equipe">?</button></div><div id="teamLoadChart" class="team-load-list"></div></section>
+          <section class="content-card dashboard-card dashboard-wide"><div class="card-title"><h2>Linha do tempo</h2><button class="help-dot" type="button" data-help="gantt">?</button></div><div id="ganttChart" class="gantt-list"></div></section>
+        </div>
+      </section>
+
+      <section id="cadastrosView" class="hidden operational-view">
+        <header class="planning-topbar planning-topbar-v2">
+          <div><div class="planning-kicker">CONFIGURAÇÃO</div><h1>Cadastros</h1><p class="subtitle">Listas usadas nos campos do sistema.</p></div>
+          <button class="secondary-button" type="button" data-help="cadastros">? Para que serve</button>
+        </header>
+        <div class="settings-grid">
+          <section class="content-card"><div class="card-title"><h2>Tipos de atividade</h2><button class="help-dot" type="button" data-help="tipo_atividade">?</button></div><div id="typesList" class="settings-list"></div><div class="quick-add"><input id="newTypeName" placeholder="Novo tipo"><button id="addTypeBtn" class="secondary-button" type="button">＋ Adicionar</button></div></section>
+          <section class="content-card"><div class="card-title"><h2>Equipes</h2><button class="help-dot" type="button" data-help="equipes">?</button></div><div id="teamsList" class="settings-list"></div><div class="quick-add"><input id="newTeamName" placeholder="Nova equipe"><button id="addTeamBtn" class="secondary-button" type="button">＋ Adicionar</button></div></section>
+        </div>
       </section>
     </main>
   </div>
@@ -196,6 +284,15 @@
     <button id="addDependencyRelationBtn" class="secondary-button full" type="button">＋ Adicionar predecessora</button>
   </aside>
 
+  <datalist id="frontOptions"></datalist>
+
+  <div id="teamBackdrop" class="drawer-backdrop hidden"></div>
+  <aside id="teamDrawer" class="help-drawer hidden">
+    <div class="drawer-header"><div><p class="eyebrow">EQUIPES DA ATIVIDADE</p><h2 id="teamDrawerTitle">Selecionar equipes</h2></div><button id="closeTeamDrawerBtn" class="icon-button" type="button">×</button></div>
+    <p class="drawer-intro">Marque todas as equipes que podem participar desta atividade. Na programação diária você informa quantas pessoas de cada uma estarão no serviço.</p>
+    <div id="teamCheckboxList" class="team-checkbox-list"></div>
+  </aside>
+
   <div id="helpPopover" class="help-popover hidden" role="dialog" aria-live="polite">
     <button id="helpPopoverClose" class="help-popover-close" type="button">×</button>
     <strong id="helpPopoverTitle"></strong>
@@ -204,5 +301,6 @@
 
   <div id="toast" class="toast hidden"></div>
   <script src="app.js"></script>
+  <script src="v4.js"></script>
 </body>
 </html>
