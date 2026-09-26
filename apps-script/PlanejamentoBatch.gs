@@ -104,7 +104,8 @@ function desativarPlanejamentoAtualBulk_(idObra) {
   [
     ['WBS','ID_OBRA','ATIVA'],
     ['ATIVIDADES','ID_OBRA','ATIVA'],
-    ['DEPENDENCIAS','ID_OBRA','ATIVA']
+    ['DEPENDENCIAS','ID_OBRA','ATIVA'],
+    ['ATIVIDADE_EQUIPES','ID_OBRA','ATIVA']
   ].forEach(function(config) {
     const sheet = getSheet_(config[0]);
     const headers = getHeaders_(sheet);
@@ -171,6 +172,13 @@ function efetivarPlanejamento_(payload) {
     const wbs = [];
     const atividades = [];
     const dependencias = [];
+    const atividadeEquipes = [];
+    const frontNames = rows
+      .filter(function(r){ return String(r.kind).toUpperCase() === 'ATIVIDADE'; })
+      .map(function(r){ return String(r.frontName || '').trim(); })
+      .filter(Boolean);
+    const frenteMap = obterOuCriarFrenteMap_(idObra, frontNames);
+    const validTeamIds = new Set(listarEquipes_().map(function(e){ return String(e.ID_EQUIPE); }));
 
     rows.forEach(function(row) {
       const key = String(row.key);
@@ -219,6 +227,7 @@ function efetivarPlanejamento_(payload) {
         ID_ATIVIDADE: idByKey[key],
         ID_OBRA: idObra,
         ID_WBS: parentWbsId,
+        ID_FRENTE: frenteMap[String(row.frontName || '').trim().toLowerCase()] || '',
         CODIGO: codes[key],
         NOME: String(row.name || '').trim(),
         ID_TIPO_ATIVIDADE: String(row.activityTypeId || '').trim(),
@@ -243,6 +252,20 @@ function efetivarPlanejamento_(payload) {
         ATIVA: true,
         CRIADO_EM: agora,
         ATUALIZADO_EM: agora
+      });
+
+      (Array.isArray(row.teamIds) ? row.teamIds : []).forEach(function(teamId) {
+        const idEquipe = String(teamId || '');
+        if (!validTeamIds.has(idEquipe)) return;
+        atividadeEquipes.push({
+          ID_ATIVIDADE_EQUIPE: uid_('ATE'),
+          ID_OBRA: idObra,
+          ID_ATIVIDADE: idByKey[key],
+          ID_EQUIPE: idEquipe,
+          ATIVA: true,
+          CRIADO_EM: agora,
+          ATUALIZADO_EM: agora
+        });
       });
     });
 
@@ -276,6 +299,7 @@ function efetivarPlanejamento_(payload) {
     appendObjectsBulk_('WBS', wbs);
     appendObjectsBulk_('ATIVIDADES', atividades);
     appendObjectsBulk_('DEPENDENCIAS', dependencias);
+    appendObjectsBulk_('ATIVIDADE_EQUIPES', atividadeEquipes);
     SpreadsheetApp.flush();
 
   } finally {
