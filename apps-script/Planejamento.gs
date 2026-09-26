@@ -11,10 +11,13 @@ function obterPlanejamento_(idObra) {
     wbs: listarWbs_(idObra),
     atividades: listarAtividades_(idObra),
     dependencias: listarDependencias_(idObra),
+    frentes: listarFrentes_(idObra),
+    atividadeEquipes: listarAtividadeEquipes_(idObra),
     cadastros: {
       tiposAtividade: listObjects_('TIPOS_ATIVIDADE').filter(function(x) { return asBoolean_(x.ATIVO, true); }),
       empresas: listObjects_('EMPRESAS_EXECUTORAS').filter(function(x) { return asBoolean_(x.ATIVA, true); }),
-      responsaveis: listObjects_('RESPONSAVEIS').filter(function(x) { return asBoolean_(x.ATIVO, true); })
+      responsaveis: listObjects_('RESPONSAVEIS').filter(function(x) { return asBoolean_(x.ATIVO, true); }),
+      equipes: listarEquipes_()
     }
   };
 }
@@ -118,6 +121,7 @@ function criarAtividade_(payload) {
     ID_ATIVIDADE: uid_('ATV'),
     ID_OBRA: idObra,
     ID_WBS: idWbs,
+    ID_FRENTE: String(payload.ID_FRENTE || payload.id_frente || '').trim(),
     CODIGO: proximoCodigoAtividade_(idObra, idWbs),
     NOME: nome,
     ID_TIPO_ATIVIDADE: String(payload.ID_TIPO_ATIVIDADE || payload.id_tipo_atividade || '').trim(),
@@ -170,6 +174,7 @@ function atualizarAtividade_(idAtividade, payload) {
   const changes = {};
   const map = {
     ID_WBS: ['ID_WBS','id_wbs'],
+    ID_FRENTE: ['ID_FRENTE','id_frente'],
     NOME: ['NOME','nome'],
     ID_TIPO_ATIVIDADE: ['ID_TIPO_ATIVIDADE','id_tipo_atividade'],
     ID_EMPRESA: ['ID_EMPRESA','id_empresa'],
@@ -206,7 +211,7 @@ function atualizarAtividade_(idAtividade, payload) {
 
   const updated = updateObjectById_(
     'ATIVIDADES','ID_ATIVIDADE',idAtividade,changes,
-    ['ID_WBS','NOME','ID_TIPO_ATIVIDADE','ID_EMPRESA','ID_RESPONSAVEL',
+    ['ID_WBS','ID_FRENTE','NOME','ID_TIPO_ATIVIDADE','ID_EMPRESA','ID_RESPONSAVEL',
      'DURACAO_PLANEJADA_DIAS','PESO_RELATIVO','RESTRICAO_INICIO_MINIMO',
      'DURACAO_PROJETADA_DIAS','ORDEM','ATIVA','ATUALIZADO_EM']
   );
