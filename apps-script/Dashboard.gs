@@ -32,7 +32,7 @@ function obterDashboard_(idObra) {
   let fimPrevisto='';
   atividades.forEach(function(a){if(a.DATA_FIM_FORECAST && (!fimPrevisto || String(a.DATA_FIM_FORECAST)>fimPrevisto)) fimPrevisto=String(a.DATA_FIM_FORECAST);});
 
-  const dates=new Set(programacao.map(function(x){return String(x.DATA).slice(0,10);}).concat(exec.map(function(x){return String(x.DATA_REFERENCIA).slice(0,10);}));
+  const dates=new Set(programacao.map(function(x){return String(x.DATA).slice(0,10);}).concat(exec.map(function(x){return String(x.DATA_REFERENCIA).slice(0,10);})));
   const sortedDates=Array.from(dates).filter(Boolean).sort();
   const curve=[];
   const actualCum={};
