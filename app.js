@@ -1,6 +1,6 @@
 const CONFIG = Object.freeze({
   API_URL: 'https://script.google.com/macros/s/AKfycbw6cRAPlwVzNOURoLNsTJ47xyezz0LStCuZyNpW2wT97f9pj3RADUn1L1MdqTq9Tm_b/exec',
-  VERSION: '0.3.2',
+  VERSION: '0.4.0',
   DRAFT_PREFIX: 'gestao_obras_draft_v3_'
 });
 
@@ -79,6 +79,9 @@ const state = {
   filterRows: '',
   dirty: false,
   tipos: [],
+  frentes: [],
+  equipes: [],
+  atividadeEquipes: [],
   collapsed: new Set(),
   dependencyEditingKey: null
 };
@@ -295,6 +298,10 @@ async function loadPlanning() {
     state.planejamento = p;
     state.obraAtual = p.obra || state.obraAtual;
     state.tipos = p.cadastros?.tiposAtividade || [];
+    state.frentes = p.frentes || [];
+    state.equipes = p.cadastros?.equipes || [];
+    state.atividadeEquipes = p.atividadeEquipes || [];
+    if (window.renderFrontOptionsV4) window.renderFrontOptionsV4();
 
     const saved = loadLocalDraft();
     if (saved?.rows?.length || saved?.dirty) {
@@ -320,6 +327,13 @@ function effectiveToDraft(p) {
   const rows = [];
   const wbsById = Object.fromEntries((p.wbs || []).map(w => [String(w.ID_WBS), w]));
   const activityKeyById = {};
+  const frontById = Object.fromEntries((p.frentes || []).map(f => [String(f.ID_FRENTE), f]));
+  const teamsByActivity = {};
+  (p.atividadeEquipes || []).forEach(link => {
+    const id = String(link.ID_ATIVIDADE);
+    if (!teamsByActivity[id]) teamsByActivity[id] = [];
+    teamsByActivity[id].push(String(link.ID_EQUIPE));
+  });
 
   (p.wbs || []).forEach((w, index) => {
     rows.push({
@@ -344,6 +358,8 @@ function effectiveToDraft(p) {
       parentKey:a.ID_WBS ? 'wbs:' + a.ID_WBS : '',
       name:a.NOME || '',
       activityTypeId:a.ID_TIPO_ATIVIDADE || '',
+      frontName:frontById[String(a.ID_FRENTE || '')]?.NOME || '',
+      teamIds:teamsByActivity[String(a.ID_ATIVIDADE)] || [],
       companyId:a.ID_EMPRESA || '',
       responsibleId:a.ID_RESPONSAVEL || '',
       duration:Number(a.DURACAO_PLANEJADA_DIAS || 1),
@@ -461,6 +477,8 @@ function renderGrid() {
       <td class="level-cell">${row.level}</td>
       <td><span class="kind-pill ${row.kind==='ETAPA'?'stage':'activity'}">${row.kind==='ETAPA'?'Etapa':'Atividade'}</span></td>
       <td class="name-cell"><input data-field="name" value="${escapeAttr(row.name||'')}" placeholder="${row.kind==='ETAPA'?'Nome da etapa':'Nome da atividade'}" style="padding-left:${Math.max(0,row.level-1)*14}px"></td>
+      <td>${row.kind==='ATIVIDADE'?'<input data-field="frontName" list="frontOptions" value="'+escapeAttr(row.frontName||'')+'" placeholder="Frente / área">':'<span class="cell-na">—</span>'}</td>
+      <td>${row.kind==='ATIVIDADE'?'<button class="team-cell-button" data-teams type="button">'+escapeHtml((row.teamIds||[]).length ? getTeamNamesV4(row.teamIds) : 'Selecionar')+'</button>':'<span class="cell-na">—</span>'}</td>
       <td>${row.kind==='ATIVIDADE'?'<select data-field="activityTypeId">'+typeOptions+'</select>':'<span class="cell-na">—</span>'}</td>
       <td>${row.kind==='ATIVIDADE'?'<input class="grid-number" data-field="duration" type="number" min="1" step="1" value="'+Number(row.duration||1)+'">':'<span class="cell-na">—</span>'}</td>
       <td>${row.kind==='ATIVIDADE'?'<input class="grid-number" data-field="weight" type="number" min="0" step="0.01" value="'+Number(row.weight||0)+'">':'<span class="cell-na">—</span>'}</td>
@@ -475,6 +493,11 @@ function renderGrid() {
 
     el.plannerBody.appendChild(tr);
   });
+}
+
+function getTeamNamesV4(ids){
+  const names=(ids||[]).map(id=>state.equipes.find(e=>String(e.ID_EQUIPE)===String(id))?.NOME).filter(Boolean);
+  return names.length<=2 ? names.join(' / ') : names.slice(0,2).join(' / ')+' +'+(names.length-2);
 }
 
 function getTypeOptions(selected){
@@ -525,6 +548,7 @@ function handleGridInput(e){
 
   if(field==='name') row.name=e.target.value;
   else if(field==='activityTypeId') row.activityTypeId=e.target.value;
+  else if(field==='frontName') row.frontName=e.target.value;
   else if(field==='duration') row.duration=Math.max(1,Number(e.target.value||1));
   else if(field==='weight') row.weight=Math.max(0,Number(e.target.value||0));
   else if(field==='restriction') row.restriction=e.target.value;
@@ -597,6 +621,8 @@ function newRow(kind,parentKey=''){
     parentKey,
     name:'',
     activityTypeId:'',
+    frontName:'',
+    teamIds:[],
     duration:1,
     weight:0,
     restriction:'',
@@ -747,6 +773,8 @@ async function effectivatePlanning(){
     parentKey:r.parentKey||'',
     name:String(r.name||'').trim(),
     activityTypeId:r.activityTypeId||'',
+    frontName:r.frontName||'',
+    teamIds:Array.isArray(r.teamIds)?r.teamIds:[],
     companyId:r.companyId||'',
     responsibleId:r.responsibleId||'',
     duration:Number(r.duration||1),
@@ -765,7 +793,11 @@ async function effectivatePlanning(){
     const p=await api('planejamento.efetivar',{id_obra:state.obraAtual.ID_OBRA,rows:payloadRows});
     state.planejamento=p;
     state.tipos=p.cadastros?.tiposAtividade||state.tipos;
+    state.frentes=p.frentes||state.frentes;
+    state.equipes=p.cadastros?.equipes||state.equipes;
+    state.atividadeEquipes=p.atividadeEquipes||[];
     state.draftRows=effectiveToDraft(p);
+    if (window.renderFrontOptionsV4) window.renderFrontOptionsV4();
     state.dirty=false;
     state.selectedKey=state.draftRows[0]?.key||null;
     clearLocalDraft();
